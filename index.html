@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GrowFast NG | Social Media Booster</title>
-<!-- Firebase SDKs (compat version for easier use) -->
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +24,14 @@ body { font-family: 'Inter', sans-serif; background: #fefefe; }
 .auth-switch { text-align: center; margin-top: 16px; color: #008751; cursor: pointer; }
 .close-auth { position: absolute; top: 16px; right: 20px; font-size: 28px; cursor: pointer; }
 .error-msg { color: #ef4444; font-size: 0.8rem; text-align: center; margin-top: 8px; }
+
+/* Loading overlay */
+.loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+.loading-spinner { width: 50px; height: 50px; border: 4px solid #e2e8f0; border-top-color: #008751; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Main Content - Hidden until logged in */
+.main-content { display: none; }
 
 /* Navbar */
 .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; flex-wrap: wrap; gap: 16px; }
@@ -62,16 +70,20 @@ footer { background: #0f172a; color: #e2e8f0; padding: 40px 0 24px; margin-top: 
 </head>
 <body>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+<div class="loading-spinner"></div>
+<p style="margin-top: 20px; color: #008751; font-weight: 600;">Loading GrowFast NG...</p>
+</div>
+
+<!-- Main Content (Hidden until logged in) -->
+<div class="main-content" id="mainContent">
 <div class="container">
 <nav class="navbar">
 <div class="logo">🇳🇬 GrowFast NG</div>
 <div class="nav-links">
 <div class="cart-icon" id="cartIcon"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span></div>
-<div id="authButtons">
-<button class="btn-outline" id="loginBtn">Login</button>
-<button class="btn-primary" id="signupBtn">Sign Up</button>
-</div>
-<div id="userInfo" style="display:none;">
+<div id="userInfo">
 <span class="user-email" id="userEmailSpan"></span>
 <button class="btn-outline" id="logoutBtn" style="margin-left:10px;">Logout</button>
 </div>
@@ -80,7 +92,7 @@ footer { background: #0f172a; color: #e2e8f0; padding: 40px 0 24px; margin-top: 
 
 <div style="text-align:center; padding:40px 0 20px;">
 <h1>Boost Social Media with ₦aira 🇳🇬</h1>
-<p>Minimum order ₦500 | Sign up to save your cart | Fast Delivery</p>
+<p>Minimum order ₦500 | Your cart is saved to your account</p>
 <div style="display:flex; justify-content:center; gap:20px; margin-top:20px; flex-wrap:wrap;">
 <span style="background:#eef2ff; padding:5px 15px; border-radius:50px;"><i class="fab fa-tiktok"></i> TikTok</span>
 <span style="background:#eef2ff; padding:5px 15px; border-radius:50px;"><i class="fab fa-instagram"></i> Instagram</span>
@@ -108,19 +120,6 @@ footer { background: #0f172a; color: #e2e8f0; padding: 40px 0 24px; margin-top: 
 <!-- WhatsApp Float -->
 <div class="whatsapp-float" id="whatsappFloat"><i class="fab fa-whatsapp fa-2x" style="color:white;"></i></div>
 
-<!-- Auth Modal -->
-<div id="authModal" class="auth-modal">
-<div class="auth-card">
-<span class="close-auth" id="closeAuth">&times;</span>
-<h2 id="authTitle">Sign Up</h2>
-<input type="email" id="authEmail" placeholder="Email address" autocomplete="email">
-<input type="password" id="authPassword" placeholder="Password" autocomplete="new-password">
-<button id="authSubmitBtn">Sign Up</button>
-<p class="auth-switch" id="authSwitch">Already have an account? Login</p>
-<div id="authError" class="error-msg"></div>
-</div>
-</div>
-
 <footer>
 <div class="container">
 <p>🇳🇬 GrowFast NG | OPay: Ahmed Isah 8132116092</p>
@@ -128,11 +127,26 @@ footer { background: #0f172a; color: #e2e8f0; padding: 40px 0 24px; margin-top: 
 <p style="margin-top:16px;">© 2025 GrowFast NG - Social Media Boosting</p>
 </div>
 </footer>
+</div>
+
+<!-- Auth Modal -->
+<div id="authModal" class="auth-modal">
+<div class="auth-card">
+<span class="close-auth" id="closeAuth">&times;</span>
+<h2 id="authTitle">Login to Continue</h2>
+<p style="text-align:center; color:#666; margin-bottom:16px;">Please sign in to access our services</p>
+<input type="email" id="authEmail" placeholder="Email address" autocomplete="email">
+<input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+<button id="authSubmitBtn">Login</button>
+<p class="auth-switch" id="authSwitch">Don't have an account? Sign Up</p>
+<div id="authError" class="error-msg"></div>
+</div>
+</div>
 
 <script>
-// ========== YOUR FIREBASE CONFIG (from screenshot) ==========
+// Firebase Configuration
 const firebaseConfig = {
-apiKey: "AIzaSyDRQsncE5A337wRzOjjwEcgiXDgplJq5lU",
+apiKey: "AIzaSyDRQsnce5A337wRzOjjwEcgiXDgplJq5lU",
 authDomain: "growfastng.firebaseapp.com",
 projectId: "growfastng",
 storageBucket: "growfastng.firebasestorage.app",
@@ -140,7 +154,6 @@ messagingSenderId: "133938265658",
 appId: "1:133938265658:web:4396fd308606de3ad43f03",
 measurementId: "G-0K8H201KX0"
 };
-// ============================================================
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
@@ -161,73 +174,121 @@ const servicesData = {
 let cart = [];
 let currentUser = null;
 
-function saveCart() {
-if(currentUser) {
-localStorage.setItem(`cart_${currentUser.uid}`, JSON.stringify(cart));
-} else {
-localStorage.setItem('cart_guest', JSON.stringify(cart));
-}
-updateCartUI();
+// Show/hide loading
+function showLoading(show) {
+document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
 }
 
+// Save cart to user account
+function saveCart() {
+if(currentUser && cart.length > 0) {
+localStorage.setItem(`cart_${currentUser.uid}`, JSON.stringify(cart));
+} else if(currentUser) {
+localStorage.setItem(`cart_${currentUser.uid}`, JSON.stringify([]));
+}
+}
+
+// Load cart for logged in user
 function loadCart() {
 if(currentUser) {
 const saved = localStorage.getItem(`cart_${currentUser.uid}`);
-if(saved) cart = JSON.parse(saved);
-else cart = [];
+if(saved) {
+cart = JSON.parse(saved);
 } else {
-const saved = localStorage.getItem('cart_guest');
-if(saved) cart = JSON.parse(saved);
-else cart = [];
+cart = [];
+}
+} else {
+cart = [];
 }
 updateCartUI();
 }
 
+// Add to cart
 function addToCart(id) {
+if(!currentUser) {
+alert('Please login to add items to cart');
+showAuthModal();
+return;
+}
 cart.push({ id, name: servicesData[id].name, price: servicesData[id].price });
 saveCart();
+updateCartUI();
+showNotification('Added to cart!', 'success');
 }
 
+// Remove from cart
 function removeFromCart(idx) {
 cart.splice(idx, 1);
 saveCart();
+updateCartUI();
 }
 
+// Get total price
 function getTotal() {
 return cart.reduce((s,i) => s + i.price, 0);
 }
 
+// Update cart UI
 function updateCartUI() {
-document.getElementById('cartCount').innerText = cart.length;
+const countEl = document.getElementById('cartCount');
+if(countEl) countEl.innerText = cart.length;
+
 const contentDiv = document.getElementById('cartContent');
 if(!contentDiv) return;
+
 if(cart.length === 0) {
 contentDiv.innerHTML = '<p style="padding:20px; text-align:center;">Cart is empty 🛒</p>';
 return;
 }
+
 contentDiv.innerHTML = `
 <div style="padding:16px;">
 <h3>Your Cart 🛍️</h3>
-${cart.map((item, i) => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;"><span>${item.name}</span><span><strong>₦${item.price}</strong></span><button onclick="removeFromCart(${i})" style="background:none; border:none; color:#ef4444; cursor:pointer;">❌</button></div>`).join('')}
+${cart.map((item, i) => `
+<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
+<span>${item.name}</span>
+<span><strong>₦${item.price}</strong></span>
+<button onclick="removeFromCart(${i})" style="background:none; border:none; color:#ef4444; cursor:pointer;">❌</button>
+</div>
+`).join('')}
 <div style="font-weight:800; font-size:1.3rem; margin:16px 0;">Total: ₦${getTotal()}</div>
 ${getTotal() < 500 ? '<p style="color:#eab308; font-size:0.8rem;">⚠️ Minimum order ₦500. Add more services.</p>' : ''}
 <button id="checkoutFinalBtn" class="checkout-btn" ${getTotal() < 500 ? 'disabled style="opacity:0.5;"' : ''}>Proceed to Checkout</button>
 </div>
 `;
+
 setTimeout(() => {
 const btn = document.getElementById('checkoutFinalBtn');
 if(btn && getTotal() >= 500) btn.onclick = checkout;
 }, 100);
 }
 
+// Checkout - send to WhatsApp
 function checkout() {
 const total = getTotal();
-if(total < 500) { alert("⚠️ Minimum order is ₦500. Add more services."); return; }
+if(total < 500) {
+alert("⚠️ Minimum order is ₦500. Add more services.");
+return;
+}
 const items = cart.map(i => `${i.name} - ₦${i.price}`).join('\n');
-const msg = `🛒 NEW ORDER from ${currentUser?.email || 'Guest'}%0A%0A📦 ITEMS:%0A${encodeURIComponent(items)}%0A%0A💰 TOTAL: ₦${total}%0A%0A✅ Pay to: OPay 8132116092 (Ahmed Isah)%0A📱 Send screenshot to this WhatsApp after payment.%0A🔔 WhatsApp: +2348168909003`;
+const msg = `🛒 NEW ORDER from ${currentUser?.email || 'Customer'}%0A%0A📦 ITEMS:%0A${encodeURIComponent(items)}%0A%0A💰 TOTAL: ₦${total}%0A%0A✅ Pay to: OPay 8132116092 (Ahmed Isah)%0A📱 Send screenshot to this WhatsApp after payment.%0A🔔 WhatsApp: +2348168909003`;
 window.open(`https://wa.me/2348168909003?text=${msg}`, '_blank');
 }
 
+// Show notification
+function showNotification(msg, type) {
+const notification = document.createElement('div');
+notification.style.cssText = `
+position: fixed; bottom: 100px; right: 20px; background: ${type === 'success' ? '#008751' : '#ef4444'};
+color: white; padding: 12px 24px; border-radius: 40px; z-index: 9999;
+font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2); animation: slideIn 0.3s ease;
+`;
+notification.innerText = msg;
+document.body.appendChild(notification);
+setTimeout(() => notification.remove(), 3000);
+}
+
+// Render services
 function renderServices() {
 const grid = document.getElementById('servicesGrid');
 if(!grid) return;
@@ -240,7 +301,12 @@ grid.innerHTML = Object.entries(servicesData).map(([id, s]) => `
 `).join('');
 }
 
-// ========== AUTHENTICATION UI ==========
+// Show auth modal
+function showAuthModal() {
+document.getElementById('authModal').style.display = 'flex';
+}
+
+// ========== AUTHENTICATION ==========
 const authModal = document.getElementById('authModal');
 const authTitle = document.getElementById('authTitle');
 const authSubmit = document.getElementById('authSubmitBtn');
@@ -248,66 +314,113 @@ const authSwitch = document.getElementById('authSwitch');
 const authEmail = document.getElementById('authEmail');
 const authPassword = document.getElementById('authPassword');
 const authError = document.getElementById('authError');
-let isLoginMode = false;
+let isLoginMode = true;
 
 function toggleAuthMode() {
 isLoginMode = !isLoginMode;
-authTitle.innerText = isLoginMode ? 'Login' : 'Sign Up';
+authTitle.innerText = isLoginMode ? 'Login to Continue' : 'Create Account';
 authSubmit.innerText = isLoginMode ? 'Login' : 'Sign Up';
-authSwitch.innerText = isLoginMode ? "Don't have account? Sign Up" : "Already have account? Login";
+authSwitch.innerText = isLoginMode ? "Don't have an account? Sign Up" : "Already have an account? Login";
 authError.innerText = '';
+authPassword.type = 'password';
 }
 
 async function handleAuth() {
 const email = authEmail.value.trim();
 const pwd = authPassword.value;
-if(!email || !pwd) { authError.innerText = 'Please enter email and password'; return; }
+
+if(!email || !pwd) {
+authError.innerText = 'Please enter email and password';
+return;
+}
+
+if(!isLoginMode && pwd.length < 6) {
+authError.innerText = 'Password must be at least 6 characters';
+return;
+}
+
 authError.innerText = '';
+showLoading(true);
+
 try {
 if(isLoginMode) {
 await auth.signInWithEmailAndPassword(email, pwd);
 } else {
 await auth.createUserWithEmailAndPassword(email, pwd);
+showNotification('Account created successfully!', 'success');
 }
 authModal.style.display = 'none';
 authEmail.value = '';
 authPassword.value = '';
 } catch(e) {
-authError.innerText = e.message;
+let errorMsg = e.message;
+if(errorMsg.includes('auth/user-not-found')) errorMsg = 'No account found with this email';
+if(errorMsg.includes('auth/wrong-password')) errorMsg = 'Incorrect password';
+if(errorMsg.includes('auth/email-already-in-use')) errorMsg = 'Email already registered. Please login.';
+authError.innerText = errorMsg;
+} finally {
+showLoading(false);
 }
 }
 
+// Auth button handlers
 authSubmit.onclick = handleAuth;
 authSwitch.onclick = toggleAuthMode;
-document.getElementById('loginBtn').onclick = () => { isLoginMode = true; toggleAuthMode(); authModal.style.display = 'flex'; };
-document.getElementById('signupBtn').onclick = () => { isLoginMode = false; toggleAuthMode(); authModal.style.display = 'flex'; };
 document.getElementById('closeAuth').onclick = () => authModal.style.display = 'none';
 window.onclick = (e) => { if(e.target === authModal) authModal.style.display = 'none'; };
 
-// Monitor auth state
+// Monitor auth state - THIS IS THE KEY - Show main content only when logged in
 auth.onAuthStateChanged(user => {
 currentUser = user;
+const mainContent = document.getElementById('mainContent');
+const loadingOverlay = document.getElementById('loadingOverlay');
+
 if(user) {
-document.getElementById('authButtons').style.display = 'none';
-document.getElementById('userInfo').style.display = 'flex';
+// User is logged in - show main content
 document.getElementById('userEmailSpan').innerText = user.email;
+mainContent.style.display = 'block';
+loadingOverlay.style.display = 'none';
+
+// Load user's cart
 loadCart();
+renderServices();
 } else {
-document.getElementById('authButtons').style.display = 'flex';
-document.getElementById('userInfo').style.display = 'none';
-cart = [];
-updateCartUI();
+// User is not logged in - show auth modal
+mainContent.style.display = 'none';
+loadingOverlay.style.display = 'none';
+
+// Reset to login mode and show modal
+isLoginMode = true;
+toggleAuthMode();
+authModal.style.display = 'flex';
 }
 });
 
-document.getElementById('logoutBtn').onclick = () => auth.signOut();
+// Logout
+document.getElementById('logoutBtn').onclick = async () => {
+await auth.signOut();
+cart = [];
+updateCartUI();
+showNotification('Logged out successfully', 'success');
+};
 
 // Cart sidebar
 const cartIcon = document.getElementById('cartIcon');
 const cartSidebar = document.getElementById('cartSidebar');
 const cartOverlay = document.getElementById('cartOverlay');
-cartIcon.onclick = () => { cartSidebar.classList.add('open'); cartOverlay.classList.add('open'); };
-function closeSidebar() { cartSidebar.classList.remove('open'); cartOverlay.classList.remove('open'); }
+
+cartIcon.onclick = () => {
+if(currentUser) {
+cartSidebar.classList.add('open');
+cartOverlay.classList.add('open');
+} else {
+showAuthModal();
+}
+};
+function closeSidebar() {
+cartSidebar.classList.remove('open');
+cartOverlay.classList.remove('open');
+}
 cartOverlay.onclick = closeSidebar;
 
 // WhatsApp button
@@ -316,11 +429,21 @@ document.getElementById('whatsappFloat').onclick = () => window.open("https://wa
 // Copy bank button
 document.getElementById('copyBankBtn').onclick = () => {
 navigator.clipboard.writeText("8132116092");
-alert("✅ OPay number 8132116092 (Ahmed Isah) copied!");
+showNotification('✅ Account number copied!', 'success');
 };
 
+// Add CSS animation
+const style = document.createElement('style');
+style.textContent = `
+@keyframes slideIn {
+from { transform: translateX(100%); opacity: 0; }
+to { transform: translateX(0); opacity: 1; }
+}
+`;
+document.head.appendChild(style);
+
+// Initial render
 renderServices();
-loadCart();
 </script>
 </body>
 </html>
