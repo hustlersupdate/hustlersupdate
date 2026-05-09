@@ -44,7 +44,6 @@
         .copy-item { background: #2a2a2a; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .copy-text { font-size: 16px; font-weight: bold; }
         .copy-icon { color: #10b981; font-size: 14px; }
-        /* Transaction history styles */
         .history-date-group { margin-bottom: 20px; }
         .history-date { color: #10b981; font-size: 14px; font-weight: bold; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #2a2a2a; }
         .history-item { background: #1a1a1a; border-radius: 12px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
@@ -64,7 +63,6 @@
 </head>
 <body>
 <div class="app" id="app">
-    <!-- WELCOME PAGE -->
     <div id="welcomePage">
         <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
         <div class="logo">GRAY PAY</div>
@@ -73,9 +71,8 @@
         <button class="btn" onclick="showSignupPage()">Get Started</button>
     </div>
 
-    <!-- SIGNUP PAGE -->
     <div id="signupPage" class="hidden">
-        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
+        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="logo">GRAY PAY</div>
         <input type="text" id="signupFirstname" class="input-field" placeholder="First Name">
         <input type="text" id="signupSurname" class="input-field" placeholder="Surname">
@@ -87,9 +84,8 @@
         <div class="text-center mt-20">Already have an account? <span style="color:#10b981; cursor:pointer;" onclick="showLoginPage()">Sign in</span></div>
     </div>
 
-    <!-- LOGIN PAGE -->
     <div id="loginPage" class="hidden">
-        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
+        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="logo">GRAY PAY</div>
         <h2>Welcome Back!</h2>
         <div style="color:#9ca3af; margin-bottom:20px;">Log in to your account to continue</div>
@@ -100,7 +96,6 @@
         <div class="text-center mt-20">Don't have an account? <span style="color:#10b981; cursor:pointer;" onclick="showSignupPage()">Create one</span></div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="dashboardPage" class="hidden">
         <div class="header"><div></div><div style="display:flex; gap:15px;"><span style="cursor:pointer; font-size:20px;" onclick="showTransactionHistory()">🔔</span><button class="help-btn" onclick="showHelp()">❓</button></div></div>
         <div class="balance-card">
@@ -127,7 +122,6 @@
         <div class="bottom-tabs"><div class="tab" onclick="alert('Wallet tab')">Wallet</div><div class="tab" onclick="alert('Social tab')">Social</div><div class="tab" onclick="alert('Data tab')">Data</div><div class="tab" onclick="alert('Profile tab')">Profile</div></div>
     </div>
 
-    <!-- DYNAMIC CONTENT -->
     <div id="dynamicContent"></div>
 </div>
 
@@ -139,7 +133,7 @@
     let users = [];
     let miningTimer = null;
 
-    function loadUsers() { let s = localStorage.getItem('graypay_users'); if(s) users = JSON.parse(s); }
+    function loadUsers() { let s = localStorage.getItem('graypay_users'); if(s) users = JSON.parse(s); else users = []; }
     function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
     function openWhatsApp() { window.open('https://wa.me/2348168909003','_blank'); }
 
@@ -168,8 +162,9 @@
 
     function showDashboardPage() { updateDashboard(); showPage('dashboardPage'); }
 
-    // ========== SIGNUP ==========
+    // ========== SIGNUP (FIXED) ==========
     function signup() {
+        loadUsers();
         let fn = document.getElementById('signupFirstname').value.trim();
         let sn = document.getElementById('signupSurname').value.trim();
         let em = document.getElementById('signupEmail').value.trim();
@@ -179,19 +174,39 @@
         if(pw.length < 8) { document.getElementById('signupError').innerText = 'Password must be 8+ characters'; return; }
         if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
         for(let u of users) if(u.email === em) { document.getElementById('signupError').innerText = 'Email exists'; return; }
-        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] };
-        users.push(newUser); saveUsers(); currentUser = newUser; localStorage.setItem('graypay_current', em);
+        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] };
+        users.push(newUser); 
+        saveUsers();
+        currentUser = newUser; 
+        localStorage.setItem('graypay_current', em);
+        // Verify save worked
+        let verify = localStorage.getItem('graypay_users');
+        if(!verify) { alert("Warning: Your browser may be in private mode. Data will not be saved after closing."); }
         showDashboardPage();
         showWelcomePopup();
     }
 
-    // ========== LOGIN (FIXED: Added loadUsers() at the beginning) ==========
+    // ========== LOGIN (FIXED) ==========
     function login() {
-        loadUsers();  // <--- THIS IS THE ONLY CHANGE
+        loadUsers();
         let em = document.getElementById('loginEmail').value.trim();
         let pw = document.getElementById('loginPassword').value;
-        for(let u of users) if(u.email === em && u.password === pw) { 
-            currentUser = u; 
+        
+        if(users.length === 0) {
+            document.getElementById('loginError').innerText = 'No accounts found. Please create an account first.';
+            return;
+        }
+        
+        let found = null;
+        for(let u of users) {
+            if(u.email === em && u.password === pw) {
+                found = u;
+                break;
+            }
+        }
+        
+        if(found) { 
+            currentUser = found; 
             localStorage.setItem('graypay_current', em); 
             showDashboardPage(); 
             return; 
@@ -201,7 +216,6 @@
 
     function autoLogin() { loadUsers(); let saved = localStorage.getItem('graypay_current'); if(saved) { for(let u of users) if(u.email === saved) { currentUser = u; showDashboardPage(); return; } } showWelcomePage(); }
 
-    // ========== PROFILE ==========
     function showProfile() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div><button class="btn" onclick="logout()">Log Out</button></div>`;
@@ -210,7 +224,6 @@
     function logout() { currentUser = null; localStorage.removeItem('graypay_current'); closeDynamic(); showWelcomePage(); }
     function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
 
-    // ========== SUCCESS POPUP ==========
     function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
@@ -318,7 +331,6 @@
         };
     }
 
-    // ========== WITHDRAW ==========
     function showWithdrawPage() {
         if(!currentUser) return;
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
@@ -365,7 +377,6 @@
             currentUser.transactions.unshift(transaction); 
             saveUsers(); 
             
-            // Show success popup
             showSuccessPopup(
                 'Withdrawal Successful!',
                 'You have successfully withdrawn',
@@ -379,7 +390,6 @@
         });
     }
 
-    // ========== BUY AIRTIME ==========
     function showBuyAirtime() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
@@ -423,7 +433,6 @@
         });
     }
 
-    // ========== BUY DATA ==========
     function showBuyData() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
@@ -470,7 +479,6 @@
         });
     }
 
-    // ========== BUY PBC FULL FLOW ==========
     function showBuyPBC() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
@@ -501,7 +509,6 @@
     }
     function goBackToBank() { showBankDetails(); }
 
-    // ========== MINING ==========
     function startMining() {
         if(!currentUser) return;
         if(currentUser.miningActive) { alert('Mining already active!'); return; }
@@ -518,13 +525,11 @@
         }, 3600000);
     }
 
-    // ========== TRANSACTION HISTORY (Grouped by Date) ==========
     function showTransactionHistory() {
         if(!currentUser) return;
         
         let transactions = [...currentUser.transactions];
         
-        // Group by date
         let groups = {};
         transactions.forEach(t => {
             let dateKey;
@@ -597,7 +602,6 @@
         document.getElementById('historyView').style.padding = '20px';
     }
     
-    // ========== TRANSACTION DETAILS PAGE ==========
     function showTransactionDetails(transactionId) {
         if(!currentUser) return;
         
@@ -725,12 +729,10 @@
         }
     }
 
-    // ========== HELP & LOADING ==========
     function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
     function showLoading(msg, ms, cb) { let loader = document.getElementById('loadingOverlay'); document.getElementById('loadingMsg').innerText = msg; loader.style.display = 'flex'; setTimeout(() => { loader.style.display = 'none'; if(cb) cb(); }, ms); }
 
-    // ========== WELCOME POPUP ==========
     function showWelcomePopup() {
         let popupHtml = `
             <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
