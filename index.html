@@ -488,8 +488,18 @@
 <script>
     // ========== DATA STORAGE ==========
     let currentUser = null;
-    let users = JSON.parse(localStorage.getItem('graypay_users') || '[]');
+    let users = [];
     let miningIntervals = {};
+
+    // Load users from localStorage on page load
+    function loadUsers() {
+        let savedUsers = localStorage.getItem('graypay_users');
+        if (savedUsers) {
+            users = JSON.parse(savedUsers);
+        } else {
+            users = [];
+        }
+    }
 
     function saveUsers() { 
         localStorage.setItem('graypay_users', JSON.stringify(users)); 
@@ -522,7 +532,8 @@
         document.getElementById('dashboardName').innerText = currentUser.firstname;
         document.getElementById('dashboardBalance').innerText = currentUser.balance;
         let percent = (currentUser.balance / 200000) * 100;
-        document.getElementById('spendProgress').style.width = Math.min(percent, 100) + '%';
+        if (percent > 100) percent = 100;
+        document.getElementById('spendProgress').style.width = percent + '%';
     }
 
     function showDashboard() {
@@ -533,11 +544,24 @@
 
     // ========== AUTO LOGIN & RESTORE SCREEN ON REFRESH ==========
     function autoLoginAndRestore() {
+        loadUsers();
+        
         let savedUserEmail = localStorage.getItem('graypay_current_user');
+        console.log('Auto login - saved email:', savedUserEmail);
+        
         if (savedUserEmail) {
-            let user = users.find(u => u.email === savedUserEmail);
+            // Find user in users array
+            let user = null;
+            for (let i = 0; i < users.length; i++) {
+                if (users[i].email === savedUserEmail) {
+                    user = users[i];
+                    break;
+                }
+            }
+            
             if (user) {
                 currentUser = user;
+                console.log('User found:', currentUser.firstname, 'Balance:', currentUser.balance);
                 
                 // Restore mining interval if it was active and not expired
                 if (currentUser.miningActive && currentUser.miningEndTime) {
@@ -557,6 +581,10 @@
                     showDashboard();
                 }
                 return true;
+            } else {
+                console.log('User not found for email:', savedUserEmail);
+                // Clear invalid session
+                localStorage.removeItem('graypay_current_user');
             }
         }
         showWelcome();
@@ -592,20 +620,28 @@
             document.getElementById('signupError').innerText = 'Passwords do not match';
             return;
         }
-        if (users.find(u => u.email === email)) {
-            document.getElementById('signupError').innerText = 'Email already exists';
-            return;
+        
+        // Check if email already exists
+        for (let i = 0; i < users.length; i++) {
+            if (users[i].email === email) {
+                document.getElementById('signupError').innerText = 'Email already exists';
+                return;
+            }
         }
 
         let newUser = {
             id: Date.now(),
-            firstname, surname, email, password,
+            firstname: firstname,
+            surname: surname,
+            email: email,
+            password: password,
             balance: 200000,
             miningActive: false,
             miningEndTime: null,
             hasSeenBonus: false,
             transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success' }]
         };
+        
         users.push(newUser);
         saveUsers();
         currentUser = newUser;
@@ -626,11 +662,20 @@
     function handleLogin() {
         let email = document.getElementById('loginEmail').value.trim();
         let password = document.getElementById('loginPassword').value;
-        let user = users.find(u => u.email === email && u.password === password);
+        
+        let user = null;
+        for (let i = 0; i < users.length; i++) {
+            if (users[i].email === email && users[i].password === password) {
+                user = users[i];
+                break;
+            }
+        }
+        
         if (!user) {
             document.getElementById('loginError').innerText = 'Invalid email or password';
             return;
         }
+        
         currentUser = user;
         saveCurrentUserSession(email);
         showDashboard();
@@ -674,10 +719,10 @@
 
     function removeDynamicViews() {
         let views = ['profileView', 'withdrawView', 'airtimeView', 'dataView', 'pbcView', 'historyView', 'palmPayWarningView', 'bankTransferView', 'failedView'];
-        views.forEach(id => {
-            let el = document.getElementById(id);
+        for (let i = 0; i < views.length; i++) {
+            let el = document.getElementById(views[i]);
             if (el) el.remove();
-        });
+        }
     }
 
     function goBackToDashboard() {
@@ -699,7 +744,10 @@
         removeDynamicViews();
         
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
-        let bankOptions = banks.map(b => `<option>${b}</option>`).join('');
+        let bankOptions = '';
+        for (let i = 0; i < banks.length; i++) {
+            bankOptions += `<option>${banks[i]}</option>`;
+        }
         
         let withdrawDiv = document.createElement('div');
         withdrawDiv.id = 'withdrawView';
@@ -840,6 +888,9 @@
     }
 
     // ========== BUY PBC FULL FLOW ==========
+    let pbcName = '';
+    let pbcEmail = '';
+
     function showBuyPBC() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -867,8 +918,11 @@
         let nameInp = document.getElementById('fullNamePBC');
         let emailInp = document.getElementById('emailPBC');
         let btn = document.getElementById('payBtnPBC');
+        
         function checkFields() { 
             if (nameInp.value && emailInp.value) {
+                pbcName = nameInp.value;
+                pbcEmail = emailInp.value;
                 btn.disabled = false;
                 btn.className = 'btn btn-enabled';
             } else {
@@ -1010,7 +1064,7 @@
         }
         
         currentUser.miningActive = true;
-        currentUser.miningEndTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
+        currentUser.miningEndTime = Date.now() + (24 * 60 * 60 * 1000);
         saveUsers();
         
         alert('Your mining has started now! Balance will increase every hour for 24 hours.');
@@ -1020,7 +1074,6 @@
     function startMiningInterval() {
         if (miningIntervals[currentUser.id]) clearInterval(miningIntervals[currentUser.id]);
         
-        // Check if mining already expired
         if (currentUser.miningEndTime && Date.now() >= currentUser.miningEndTime) {
             currentUser.miningActive = false;
             saveUsers();
@@ -1028,11 +1081,9 @@
             return;
         }
         
-        // Start interval to add balance every hour
         miningIntervals[currentUser.id] = setInterval(() => {
             if (!currentUser || !currentUser.miningActive) return;
             
-            // Check if mining period is over
             if (Date.now() >= currentUser.miningEndTime) {
                 clearInterval(miningIntervals[currentUser.id]);
                 currentUser.miningActive = false;
@@ -1042,14 +1093,12 @@
                 return;
             }
             
-            // Add approximately ₦8,333 every hour (200,000 / 24)
             let added = Math.floor(200000 / 24);
             currentUser.balance += added;
             saveUsers();
             updateDashboard();
-            console.log(`Mining added ₦${added}. New balance: ₦${currentUser.balance}`);
             
-        }, 3600000); // 1 hour in milliseconds
+        }, 3600000);
     }
 
     // ========== TRANSACTION HISTORY ==========
@@ -1058,7 +1107,11 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         removeDynamicViews();
         
-        let historyHtml = currentUser.transactions.map(t => `<div class="info-box" style="cursor:pointer;" onclick="alert('Details: ${t.type} on ${t.date}\\nAmount: ₦${t.amount}\\nStatus: ${t.status}')">${t.type}: ₦${t.amount} - ${t.status}</div>`).join('');
+        let historyHtml = '';
+        for (let i = 0; i < currentUser.transactions.length; i++) {
+            let t = currentUser.transactions[i];
+            historyHtml += `<div class="info-box" style="cursor:pointer;" onclick="alert('Details: ${t.type} on ${t.date}\\nAmount: ₦${t.amount}\\nStatus: ${t.status}')">${t.type}: ₦${t.amount} - ${t.status}</div>`;
+        }
         
         let historyDiv = document.createElement('div');
         historyDiv.id = 'historyView';
