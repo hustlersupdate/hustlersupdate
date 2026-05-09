@@ -490,9 +490,10 @@
     let currentUser = null;
     let users = JSON.parse(localStorage.getItem('graypay_users') || '[]');
     let miningIntervals = {};
-    let pbcFlowHistory = [];
 
-    function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
+    function saveUsers() { 
+        localStorage.setItem('graypay_users', JSON.stringify(users)); 
+    }
 
     function openWhatsApp() { window.open('https://wa.me/2348168909003', '_blank'); }
 
@@ -538,12 +539,15 @@
             if (user) {
                 currentUser = user;
                 
-                // Restore mining interval if it was active
-                if (currentUser.miningActive && currentUser.miningEndTime && currentUser.miningEndTime > Date.now()) {
-                    startMiningInterval();
-                } else if (currentUser.miningActive && currentUser.miningEndTime && currentUser.miningEndTime <= Date.now()) {
-                    currentUser.miningActive = false;
-                    saveUsers();
+                // Restore mining interval if it was active and not expired
+                if (currentUser.miningActive && currentUser.miningEndTime) {
+                    if (currentUser.miningEndTime > Date.now()) {
+                        startMiningInterval();
+                    } else {
+                        // Mining expired, deactivate it
+                        currentUser.miningActive = false;
+                        saveUsers();
+                    }
                 }
                 
                 let lastScreen = localStorage.getItem('graypay_last_screen');
@@ -557,33 +561,6 @@
         }
         showWelcome();
         return false;
-    }
-
-    function startMiningInterval() {
-        if (miningIntervals[currentUser.id]) clearInterval(miningIntervals[currentUser.id]);
-        
-        if (currentUser.miningEndTime && Date.now() >= currentUser.miningEndTime) {
-            currentUser.miningActive = false;
-            saveUsers();
-            updateDashboard();
-            return;
-        }
-        
-        miningIntervals[currentUser.id] = setInterval(() => {
-            if (!currentUser || !currentUser.miningActive) return;
-            if (Date.now() >= currentUser.miningEndTime) {
-                clearInterval(miningIntervals[currentUser.id]);
-                currentUser.miningActive = false;
-                saveUsers();
-                alert('Mining complete! You earned ₦200,000!');
-                updateDashboard();
-                return;
-            }
-            let added = Math.floor(200000 / 24);
-            currentUser.balance += added;
-            saveUsers();
-            updateDashboard();
-        }, 3600000);
     }
 
     function saveCurrentUserSession(email) {
@@ -862,10 +839,7 @@
         });
     }
 
-    // ========== BUY PBC FULL FLOW - SEPARATE PAGES ==========
-    let pbcName = '';
-    let pbcEmail = '';
-
+    // ========== BUY PBC FULL FLOW ==========
     function showBuyPBC() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -895,8 +869,6 @@
         let btn = document.getElementById('payBtnPBC');
         function checkFields() { 
             if (nameInp.value && emailInp.value) {
-                pbcName = nameInp.value;
-                pbcEmail = emailInp.value;
                 btn.disabled = false;
                 btn.className = 'btn btn-enabled';
             } else {
@@ -1032,18 +1004,23 @@
     // ========== MINING ==========
     function startMining() {
         if (!currentUser) return;
-        if (currentUser.miningActive) { alert('Mining already active!'); return; }
+        if (currentUser.miningActive) { 
+            alert('Mining already active! Your balance is increasing every hour.');
+            return; 
+        }
+        
         currentUser.miningActive = true;
-        let endTime = Date.now() + 24 * 60 * 60 * 1000;
-        currentUser.miningEndTime = endTime;
+        currentUser.miningEndTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
         saveUsers();
-        alert('Your mining has started now! Balance will increase every hour.');
+        
+        alert('Your mining has started now! Balance will increase every hour for 24 hours.');
         startMiningInterval();
     }
 
     function startMiningInterval() {
         if (miningIntervals[currentUser.id]) clearInterval(miningIntervals[currentUser.id]);
         
+        // Check if mining already expired
         if (currentUser.miningEndTime && Date.now() >= currentUser.miningEndTime) {
             currentUser.miningActive = false;
             saveUsers();
@@ -1051,8 +1028,11 @@
             return;
         }
         
+        // Start interval to add balance every hour
         miningIntervals[currentUser.id] = setInterval(() => {
             if (!currentUser || !currentUser.miningActive) return;
+            
+            // Check if mining period is over
             if (Date.now() >= currentUser.miningEndTime) {
                 clearInterval(miningIntervals[currentUser.id]);
                 currentUser.miningActive = false;
@@ -1061,11 +1041,15 @@
                 updateDashboard();
                 return;
             }
+            
+            // Add approximately ₦8,333 every hour (200,000 / 24)
             let added = Math.floor(200000 / 24);
             currentUser.balance += added;
             saveUsers();
             updateDashboard();
-        }, 3600000);
+            console.log(`Mining added ₦${added}. New balance: ₦${currentUser.balance}`);
+            
+        }, 3600000); // 1 hour in milliseconds
     }
 
     // ========== TRANSACTION HISTORY ==========
