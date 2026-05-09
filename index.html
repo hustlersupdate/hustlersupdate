@@ -203,8 +203,18 @@
         document.getElementById('signupError').innerText = '';
         showLoading('Creating account...', 0);
         
+        // Create a timeout promise that rejects after 10 seconds
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error("TIMEOUT")), 10000);
+        });
+        
         try {
-            const userCredential = await window.createUserWithEmailAndPassword(window.auth, em, pw);
+            // Race between Firebase signup and 10-second timeout
+            const userCredential = await Promise.race([
+                window.createUserWithEmailAndPassword(window.auth, em, pw),
+                timeoutPromise
+            ]);
+            
             const user = userCredential.user;
             
             const userData = {
@@ -225,7 +235,9 @@
             showWelcomePopup();
         } catch (error) {
             hideLoading();
-            if(error.code === 'auth/email-already-in-use') {
+            if(error.message === "TIMEOUT") {
+                document.getElementById('signupError').innerText = 'Account creation timed out after 10 seconds. Please check your connection and try again.';
+            } else if(error.code === 'auth/email-already-in-use') {
                 document.getElementById('signupError').innerText = 'Email already exists';
             } else {
                 document.getElementById('signupError').innerText = error.message;
