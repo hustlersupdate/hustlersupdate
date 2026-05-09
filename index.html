@@ -185,10 +185,17 @@
         showWelcomePopup();
     }
 
+    // ========== LOGIN (FIXED: Added loadUsers() at the beginning) ==========
     function login() {
+        loadUsers();  // <--- THIS IS THE ONLY CHANGE
         let em = document.getElementById('loginEmail').value.trim();
         let pw = document.getElementById('loginPassword').value;
-        for(let u of users) if(u.email === em && u.password === pw) { currentUser = u; localStorage.setItem('graypay_current', em); showDashboardPage(); return; }
+        for(let u of users) if(u.email === em && u.password === pw) { 
+            currentUser = u; 
+            localStorage.setItem('graypay_current', em); 
+            showDashboardPage(); 
+            return; 
+        }
         document.getElementById('loginError').innerText = 'Invalid email or password';
     }
 
