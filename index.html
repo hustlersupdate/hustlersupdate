@@ -44,7 +44,6 @@
         .copy-item { background: #2a2a2a; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .copy-text { font-size: 16px; font-weight: bold; }
         .copy-icon { color: #10b981; font-size: 14px; }
-        /* Transaction history styles */
         .history-date-group { margin-bottom: 20px; }
         .history-date { color: #10b981; font-size: 14px; font-weight: bold; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #2a2a2a; }
         .history-item { background: #1a1a1a; border-radius: 12px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
@@ -60,8 +59,6 @@
         .transaction-detail-value { color: #fff; font-size: 14px; font-weight: 500; text-align: right; }
         .receipt-actions { display: flex; gap: 12px; margin-top: 20px; }
         .receipt-actions .btn { flex: 1; }
-
-        /* Splash Loading Screen - NEW */
         .splash-loading {
             position: fixed;
             top: 0;
@@ -98,11 +95,33 @@
             margin-top: 10px;
             font-size: 14px;
         }
+        /* Profile badge */
+        .profile-icon-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        .profile-badge {
+            position: absolute;
+            top: -8px;
+            right: -12px;
+            background-color: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+            border: 1px solid #0a0a0a;
+            display: none;
+        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
-    <!-- WELCOME PAGE -->
     <div id="welcomePage">
         <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
         <div class="logo">GRAY PAY</div>
@@ -111,9 +130,8 @@
         <button class="btn" onclick="showSignupPage()">Get Started</button>
     </div>
 
-    <!-- SIGNUP PAGE -->
     <div id="signupPage" class="hidden">
-        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
+        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="logo">GRAY PAY</div>
         <input type="text" id="signupFirstname" class="input-field" placeholder="First Name">
         <input type="text" id="signupSurname" class="input-field" placeholder="Surname">
@@ -125,9 +143,8 @@
         <div class="text-center mt-20">Already have an account? <span style="color:#10b981; cursor:pointer;" onclick="showLoginPage()">Sign in</span></div>
     </div>
 
-    <!-- LOGIN PAGE -->
     <div id="loginPage" class="hidden">
-        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
+        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="logo">GRAY PAY</div>
         <h2>Welcome Back!</h2>
         <div style="color:#9ca3af; margin-bottom:20px;">Log in to your account to continue</div>
@@ -138,7 +155,6 @@
         <div class="text-center mt-20">Don't have an account? <span style="color:#10b981; cursor:pointer;" onclick="showSignupPage()">Create one</span></div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="dashboardPage" class="hidden">
         <div class="header"><div></div><div style="display:flex; gap:15px;"><span style="cursor:pointer; font-size:20px;" onclick="showTransactionHistory()">🔔</span><button class="help-btn" onclick="showHelp()">❓</button></div></div>
         <div class="balance-card">
@@ -154,7 +170,11 @@
             <div onclick="openWhatsApp()"><div class="service-icon">🛡️</div><div class="service-label">Support</div></div>
             <div onclick="openWhatsApp()"><div class="service-icon">👥</div><div class="service-label">Group</div></div>
             <div onclick="startMining()"><div class="service-icon">⛏️</div><div class="service-label">Earn</div></div>
-            <div onclick="showProfile()"><div class="service-icon">👤</div><div class="service-label">Profile</div></div>
+            <div onclick="showProfile()" class="profile-icon-wrapper">
+                <div class="service-icon">👤</div>
+                <div class="service-label">Profile</div>
+                <span id="profileBadge" class="profile-badge">1</span>
+            </div>
         </div>
         <div class="services-grid">
             <div onclick="showBuyPBC()"><div class="service-icon">💳</div><div class="service-label">Buy PBC</div></div>
@@ -165,7 +185,6 @@
         <div class="bottom-tabs"><div class="tab" onclick="alert('Wallet tab')">Wallet</div><div class="tab" onclick="alert('Social tab')">Social</div><div class="tab" onclick="alert('Data tab')">Data</div><div class="tab" onclick="alert('Profile tab')">Profile</div></div>
     </div>
 
-    <!-- DYNAMIC CONTENT -->
     <div id="dynamicContent"></div>
 </div>
 
@@ -204,9 +223,19 @@
         }
     }
 
-    function showDashboardPage() { updateDashboard(); showPage('dashboardPage'); }
+    function showDashboardPage() { 
+        updateDashboard(); 
+        showPage('dashboardPage');
+        // Show badge if not seen
+        let seen = localStorage.getItem('profile_notification_seen');
+        let badge = document.getElementById('profileBadge');
+        if(badge && !seen && currentUser) {
+            badge.style.display = 'inline-block';
+        } else if(badge) {
+            badge.style.display = 'none';
+        }
+    }
 
-    // ========== SPLASH LOADING SCREEN (ADDED - DO NOT REMOVE) ==========
     function showSplashLoading(callback) {
         let splashDiv = document.createElement('div');
         splashDiv.className = 'splash-loading';
@@ -216,7 +245,6 @@
             <div class="loading-text">Loading your dashboard...</div>
         `;
         document.body.appendChild(splashDiv);
-        
         setTimeout(() => {
             splashDiv.remove();
             if(callback) callback();
@@ -258,7 +286,6 @@
         document.getElementById('loginError').innerText = 'Invalid email or password';
     }
 
-    // ========== FIXED AUTO LOGIN ==========
     function autoLogin() { 
         loadUsers(); 
         let saved = localStorage.getItem('graypay_current'); 
@@ -277,9 +304,15 @@
     // ========== PROFILE ==========
     function showProfile() {
         if(!currentUser) return;
+        // Hide badge when profile is clicked
+        let badge = document.getElementById('profileBadge');
+        if(badge) badge.style.display = 'none';
+        localStorage.setItem('profile_notification_seen', 'true');
+        
         document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div><button class="btn" onclick="logout()">Log Out</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('profileView').style.display = 'block'; document.getElementById('profileView').style.padding = '20px';
     }
+    
     function logout() { 
         showSplashLoading(() => {
             currentUser = null; 
@@ -290,7 +323,7 @@
     }
     function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
 
-    // ========== SUCCESS POPUP ==========
+    // ========== SUCCESS POPUPS (Keep all your existing ones) ==========
     function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
@@ -445,7 +478,6 @@
             currentUser.transactions.unshift(transaction); 
             saveUsers(); 
             
-            // Show success popup
             showSuccessPopup(
                 'Withdrawal Successful!',
                 'You have successfully withdrawn',
@@ -550,7 +582,7 @@
         });
     }
 
-    // ========== BUY PBC FULL FLOW ==========
+    // ========== BUY PBC ==========
     function showBuyPBC() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
@@ -598,13 +630,11 @@
         }, 3600000);
     }
 
-    // ========== TRANSACTION HISTORY (Grouped by Date) ==========
+    // ========== TRANSACTION HISTORY ==========
     function showTransactionHistory() {
         if(!currentUser) return;
         
         let transactions = [...currentUser.transactions];
-        
-        // Group by date
         let groups = {};
         transactions.forEach(t => {
             let dateKey;
@@ -677,7 +707,7 @@
         document.getElementById('historyView').style.padding = '20px';
     }
     
-    // ========== TRANSACTION DETAILS PAGE ==========
+    // ========== TRANSACTION DETAILS ==========
     function showTransactionDetails(transactionId) {
         if(!currentUser) return;
         
@@ -805,12 +835,10 @@
         }
     }
 
-    // ========== HELP & LOADING ==========
     function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
     function showLoading(msg, ms, cb) { let loader = document.getElementById('loadingOverlay'); document.getElementById('loadingMsg').innerText = msg; loader.style.display = 'flex'; setTimeout(() => { loader.style.display = 'none'; if(cb) cb(); }, ms); }
 
-    // ========== WELCOME POPUP ==========
     function showWelcomePopup() {
         let popupHtml = `
             <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
@@ -832,11 +860,161 @@
         if(popup) popup.remove();
     }
 
-    // ========== FIX: Ensure users load before auto-login ==========
     document.addEventListener('DOMContentLoaded', function() {
         loadUsers();
         autoLogin();
     });
+
+    // ========== FIREBASE EMAIL VERIFICATION (ADDED - DOES NOT CHANGE ANYTHING ABOVE) ==========
+    const firebaseScript = document.createElement('script');
+    firebaseScript.type = 'module';
+    firebaseScript.innerHTML = `
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRQsnce5A337wRzOjjwEcgiXDgplJq5lU",
+            authDomain: "growfastng.firebaseapp.com",
+            projectId: "growfastng",
+            storageBucket: "growfastng.firebasestorage.app",
+            messagingSenderId: "133938265658",
+            appId: "1:133938265658:web:4396fd308606de3ad43f03",
+            measurementId: "G-0K8H201KX0"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        const originalSignup = window.signup;
+        const originalLogin = window.login;
+        
+        // Add email verification to signup
+        window.signup = async function() {
+            let fn = document.getElementById('signupFirstname').value.trim();
+            let sn = document.getElementById('signupSurname').value.trim();
+            let em = document.getElementById('signupEmail').value.trim();
+            let pw = document.getElementById('signupPassword').value;
+            let cf = document.getElementById('signupConfirm').value;
+            
+            if(!fn || !sn || !em || !pw) { document.getElementById('signupError').innerText = 'All fields required'; return; }
+            if(pw.length < 8) { document.getElementById('signupError').innerText = 'Password must be 8+ characters'; return; }
+            if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, em, pw);
+                await sendEmailVerification(userCredential.user);
+                alert("📧 Verification email sent to " + em + "!\\n\\nPlease check your inbox and click the verification link.");
+                originalSignup();
+                // Show badge for new user
+                setTimeout(() => {
+                    let badge = document.getElementById('profileBadge');
+                    if(badge) badge.style.display = 'inline-block';
+                    localStorage.removeItem('profile_notification_seen');
+                }, 500);
+            } catch (error) {
+                if(error.code === 'auth/email-already-in-use') {
+                    document.getElementById('signupError').innerText = 'Email already registered';
+                } else {
+                    document.getElementById('signupError').innerText = error.message;
+                }
+            }
+        };
+        
+        // Check email verification on login
+        window.login = async function() {
+            let em = document.getElementById('loginEmail').value.trim();
+            let pw = document.getElementById('loginPassword').value;
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, em, pw);
+                if(!userCredential.user.emailVerified) {
+                    document.getElementById('loginError').innerHTML = 'Please verify your email first. Check your inbox.<br><button class="btn" style="background:#fbbf24; color:#000; margin-top:10px; padding:8px;" onclick="resendVerificationEmail()">📧 Resend Verification Email</button>';
+                    return;
+                }
+                originalLogin();
+            } catch (error) {
+                document.getElementById('loginError').innerText = 'Invalid email or password';
+            }
+        };
+        
+        // Resend verification function
+        window.resendVerificationEmail = async function() {
+            if(auth.currentUser) {
+                await sendEmailVerification(auth.currentUser);
+                alert("Verification email resent! Please check your inbox.");
+            } else {
+                let em = document.getElementById('loginEmail').value.trim();
+                let pw = document.getElementById('loginPassword').value;
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, em, pw);
+                    await sendEmailVerification(userCredential.user);
+                    alert("Verification email sent! Please check your inbox.");
+                } catch(error) {
+                    alert("Please enter your email and password first, then click Resend.");
+                }
+            }
+        };
+        
+        window.sendVerificationEmailFirebase = async function() {
+            if(auth.currentUser && !auth.currentUser.emailVerified) {
+                await sendEmailVerification(auth.currentUser);
+                alert("Verification email sent! Please check your inbox.");
+            }
+        };
+        
+        // Monitor auth state to update profile and history
+        onAuthStateChanged(auth, async (user) => {
+            if(user && !user.emailVerified) {
+                // Add verification warning to profile page
+                const originalShowProfile = window.showProfile;
+                window.showProfile = function() {
+                    originalShowProfile();
+                    setTimeout(() => {
+                        const profileView = document.getElementById('profileView');
+                        if(profileView && auth.currentUser && !auth.currentUser.emailVerified) {
+                            if(!profileView.querySelector('.email-verify-warning')) {
+                                const warningHtml = '<div class="warning-box email-verify-warning" style="background:#1f1f1f; border-left-color:#fbbf24; margin-bottom:15px;">📧 <strong>Email Verification Required!</strong><br>Your email has not been verified yet.<br><br><button class="btn" style="background:#fbbf24; color:#000;" onclick="sendVerificationEmailFirebase()">📧 Send Verification Email</button></div>';
+                                const logOutBtn = profileView.querySelector('.btn:last-child');
+                                if(logOutBtn) {
+                                    logOutBtn.insertAdjacentHTML('beforebegin', warningHtml);
+                                }
+                            }
+                        } else if(profileView && auth.currentUser && auth.currentUser.emailVerified) {
+                            if(!profileView.querySelector('.email-verified-success')) {
+                                const verifiedHtml = '<div class="info-box email-verified-success" style="background:#064e3b; border-left-color:#10b981; margin-bottom:15px;">✅ <strong>Email Verified!</strong><br>Your email has been successfully verified.</div>';
+                                const logOutBtn = profileView.querySelector('.btn:last-child');
+                                const existingWarning = profileView.querySelector('.email-verify-warning');
+                                if(existingWarning) existingWarning.remove();
+                                if(logOutBtn && !profileView.querySelector('.email-verified-success')) {
+                                    logOutBtn.insertAdjacentHTML('beforebegin', verifiedHtml);
+                                }
+                            }
+                        }
+                    }, 100);
+                };
+                
+                // Add verification warning to transaction history
+                const originalShowHistory = window.showTransactionHistory;
+                window.showTransactionHistory = function() {
+                    if(!currentUser) return;
+                    originalShowHistory();
+                    setTimeout(() => {
+                        const historyView = document.getElementById('historyView');
+                        if(historyView && auth.currentUser && !auth.currentUser.emailVerified) {
+                            if(!historyView.querySelector('.history-verify-warning')) {
+                                const warningHtml = '<div class="warning-box history-verify-warning" style="background:#1f1f1f; border-left-color:#fbbf24; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><div><strong>📧 Verify Your Email</strong><br><small style="color:#9ca3af;">Verify your email to secure your account</small></div><button class="btn" style="background:#fbbf24; color:#000; padding:8px 16px; font-size:12px;" onclick="sendVerificationEmailFirebase()">Send Email</button></div>';
+                                const title = historyView.querySelector('h2');
+                                if(title) {
+                                    title.insertAdjacentHTML('afterend', warningHtml);
+                                }
+                            }
+                        }
+                    }, 100);
+                };
+            }
+        });
+    `;
+    document.head.appendChild(firebaseScript);
 </script>
 </body>
 </html>
