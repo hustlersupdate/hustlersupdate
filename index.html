@@ -126,6 +126,21 @@
             font-size: 13px;
             color: #10b981;
             text-align: center;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+        .scrolling-text {
+            display: inline-block;
+            animation: scrollText 20s linear infinite;
+            padding-left: 100%;
+        }
+        @keyframes scrollText {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        .mining-status-box:hover .scrolling-text {
+            animation-play-state: paused;
         }
         .mining-notification {
             position: fixed;
@@ -351,12 +366,28 @@
             if(percent > 100) percent = 100;
             document.getElementById('progressFill').style.width = percent + '%';
             
-            // Show mining status if active
+            // Show mining status if active with SMOOTH SCROLLING TEXT
             let existingStatus = document.getElementById('miningStatusBox');
             if(currentUser.miningActive) {
-                let remainingHours = Math.ceil((currentUser.miningEnd - Date.now()) / (60 * 60 * 1000));
-                if(remainingHours < 0) remainingHours = 0;
+                let remainingMs = currentUser.miningEnd - Date.now();
+                let remainingHours = Math.floor(remainingMs / (60 * 60 * 1000));
+                let remainingMinutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+                let remainingSeconds = Math.floor((remainingMs % (60 * 1000)) / 1000);
+                
+                let lastClaim = currentUser.lastClaimTime || currentUser.miningStart;
+                let nextRewardMs = (lastClaim + (60 * 60 * 1000)) - Date.now();
+                let nextRewardMinutes = Math.floor(nextRewardMs / (60 * 1000));
+                let nextRewardSeconds = Math.floor((nextRewardMs % (60 * 1000)) / 1000);
+                if(nextRewardMs < 0) {
+                    nextRewardMinutes = 0;
+                    nextRewardSeconds = 0;
+                }
+                
                 let claimed = currentUser.miningClaimed || 0;
+                
+                // Create scrolling message (repeat message for seamless loop)
+                let message = ' ⛏️ MINING ACTIVE! ' + remainingHours + 'h ' + remainingMinutes + 'm ' + remainingSeconds + 's remaining | Next reward: ' + nextRewardMinutes + 'm ' + nextRewardSeconds + 's | Claimed: ₦' + claimed.toLocaleString() + ' / ₦200,000 🚀 ••• ';
+                let fullMessage = message + message + message;
                 
                 if(!existingStatus) {
                     let statusDiv = document.createElement('div');
@@ -366,7 +397,7 @@
                 }
                 let statusEl = document.getElementById('miningStatusBox');
                 if(statusEl) {
-                    statusEl.innerHTML = '⛏️ Mining active! ~' + remainingHours + ' hour(s) remaining | Claimed: ₦' + claimed.toLocaleString() + ' / ₦200,000';
+                    statusEl.innerHTML = '<div class="scrolling-text">' + fullMessage + '</div>';
                 }
             } else {
                 if(existingStatus) existingStatus.remove();
@@ -375,6 +406,7 @@
     }
 
     function showDashboardPage() { 
+        if(window.scrollInterval) clearInterval(window.scrollInterval);
         updateDashboard(); 
         showPage('dashboardPage');
         let seen = localStorage.getItem('profile_notification_seen');
@@ -383,6 +415,17 @@
             badge.style.display = 'inline-block';
         } else if(badge) {
             badge.style.display = 'none';
+        }
+        // Update scrolling text every 1 second
+        if(currentUser && currentUser.miningActive) {
+            if(window.scrollInterval) clearInterval(window.scrollInterval);
+            window.scrollInterval = setInterval(function() {
+                if(currentUser && currentUser.miningActive) {
+                    updateDashboard();
+                } else {
+                    if(window.scrollInterval) clearInterval(window.scrollInterval);
+                }
+            }, 1000);
         }
     }
 
