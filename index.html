@@ -6,11 +6,9 @@
     <title>Gray Pay - Complete</title>
     <!-- Firebase SDKs -->
     <script type="module">
-        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         
-        // Your Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyDRQsnce5A337wRzOjjwEcgiXDgplJq5lU",
             authDomain: "growfastng.firebaseapp.com",
@@ -21,16 +19,15 @@
             measurementId: "G-0K8H201KX0"
         };
         
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
-        // Make auth available globally
-        window.firebaseAuth = auth;
-        window.firebaseCreateUser = createUserWithEmailAndPassword;
-        window.firebaseSignIn = signInWithEmailAndPassword;
-        window.firebaseSendEmailVerification = sendEmailVerification;
-        window.firebaseOnAuthStateChanged = onAuthStateChanged;
+        window.auth = auth;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.sendEmailVerification = sendEmailVerification;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
     </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -144,9 +141,6 @@
             text-align: center;
             border: 1px solid #0a0a0a;
         }
-        .email-verified-badge {
-            background-color: #10b981;
-        }
     </style>
 </head>
 <body>
@@ -223,7 +217,6 @@
 <div id="loadingOverlay" class="loading"><div>⏳</div><div id="loadingMsg">Processing...</div></div>
 
 <script type="module">
-    // Import Firebase Auth functions
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     
     const auth = getAuth();
@@ -234,7 +227,7 @@
 
     function loadUsers() { let s = localStorage.getItem('graypay_users'); if(s) users = JSON.parse(s); else users = []; }
     function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
-    function openWhatsApp() { window.open('https://wa.me/2348168909003','_blank'); }
+    window.openWhatsApp = function() { window.open('https://wa.me/2348168909003','_blank'); }
 
     function showPage(id) {
         document.getElementById('welcomePage').classList.add('hidden');
@@ -245,9 +238,9 @@
         if(el) el.classList.remove('hidden');
         if(id === 'dashboardPage' && currentUser) updateDashboard();
     }
-    function showWelcomePage() { showPage('welcomePage'); }
-    function showSignupPage() { showPage('signupPage'); }
-    function showLoginPage() { showPage('loginPage'); }
+    window.showWelcomePage = function() { showPage('welcomePage'); }
+    window.showSignupPage = function() { showPage('signupPage'); }
+    window.showLoginPage = function() { showPage('loginPage'); }
 
     function updateDashboard() {
         if(currentUser) {
@@ -280,7 +273,6 @@
         }, 4500);
     }
 
-    // ========== SIGNUP WITH FIREBASE ==========
     window.signup = async function() {
         let fn = document.getElementById('signupFirstname').value.trim();
         let sn = document.getElementById('signupSurname').value.trim();
@@ -293,20 +285,15 @@
         if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
         
         try {
-            // Create user in Firebase
             const userCredential = await createUserWithEmailAndPassword(auth, em, pw);
             const firebaseUser = userCredential.user;
-            
-            // Send verification email
             await sendEmailVerification(firebaseUser);
             
-            // Check if email already exists in localStorage
             for(let u of users) if(u.email === em) { 
                 document.getElementById('signupError').innerText = 'Email exists'; 
                 return; 
             }
             
-            // Create local user data
             let newUser = { 
                 id: Date.now(), 
                 firebaseUid: firebaseUser.uid,
@@ -328,7 +315,7 @@
             showSplashLoading(() => {
                 showDashboardPage();
                 showWelcomePopup();
-                alert("📧 Verification email sent to " + em + "!\n\nPlease check your inbox and click the verification link to verify your email address.");
+                alert("📧 Verification email sent to " + em + "!\n\nPlease check your inbox and click the verification link to verify your email address before logging in.");
             });
         } catch (error) {
             console.error(error);
@@ -340,23 +327,19 @@
         }
     }
 
-    // ========== LOGIN WITH FIREBASE ==========
     window.login = async function() {
         let em = document.getElementById('loginEmail').value.trim();
         let pw = document.getElementById('loginPassword').value;
         
         try {
-            // Sign in with Firebase
             const userCredential = await signInWithEmailAndPassword(auth, em, pw);
             const firebaseUser = userCredential.user;
             
-            // Check if email is verified
             if(!firebaseUser.emailVerified) {
                 document.getElementById('loginError').innerText = 'Please verify your email first. Check your inbox for verification link.';
                 return;
             }
             
-            // Load local user data
             loadUsers();
             let localUser = users.find(u => u.email === em);
             
@@ -364,7 +347,6 @@
                 currentUser = localUser;
                 currentUser.emailVerified = firebaseUser.emailVerified;
             } else {
-                // Create local user if doesn't exist (for existing Firebase users)
                 currentUser = { 
                     id: Date.now(), 
                     firebaseUid: firebaseUser.uid,
@@ -391,14 +373,12 @@
         }
     }
 
-    // ========== CHECK FIREBASE EMAIL VERIFICATION STATUS ==========
     async function checkFirebaseEmailVerification() {
         const firebaseUser = auth.currentUser;
         if(firebaseUser && currentUser) {
             await firebaseUser.reload();
             if(firebaseUser.emailVerified) {
                 currentUser.emailVerified = true;
-                // Update local storage
                 let localUser = users.find(u => u.email === currentUser.email);
                 if(localUser) {
                     localUser.emailVerified = true;
@@ -410,7 +390,6 @@
         return currentUser ? (currentUser.emailVerified || false) : false;
     }
 
-    // ========== SEND VERIFICATION EMAIL (REAL) ==========
     window.sendVerificationEmail = async function() {
         const firebaseUser = auth.currentUser;
         if(firebaseUser && !firebaseUser.emailVerified) {
@@ -430,7 +409,6 @@
             }
         }
         
-        // Refresh views
         if(document.getElementById('historyView')) {
             showTransactionHistory();
         }
@@ -439,14 +417,11 @@
         }
     }
 
-    // ========== CHECK IF EMAIL IS VERIFIED ==========
     function isEmailVerified() {
         if(currentUser && currentUser.emailVerified) return true;
-        let verified = localStorage.getItem('email_verified_' + (currentUser ? currentUser.email : ''));
-        return verified === 'true';
+        return false;
     }
 
-    // ========== PROFILE NOTIFICATION ==========
     function showProfileNotification() {
         let badge = document.getElementById('profileNotificationBadge');
         if(badge) {
@@ -469,12 +444,10 @@
         }
     }
 
-    // ========== PROFILE ==========
     window.showProfile = async function() {
         if(!currentUser) return;
         hideProfileNotification();
         
-        // Check real verification status from Firebase
         let isVerified = await checkFirebaseEmailVerification();
         
         let verificationMessage = '';
@@ -500,52 +473,8 @@
     
     function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
 
-    // ========== AUTO LOGIN WITH FIREBASE ==========
-    onAuthStateChanged(auth, async (firebaseUser) => {
-        loadUsers();
-        if(firebaseUser) {
-            if(!firebaseUser.emailVerified) {
-                // Not verified - show login page
-                showWelcomePage();
-                return;
-            }
-            
-            let localUser = users.find(u => u.email === firebaseUser.email);
-            if(localUser) {
-                currentUser = localUser;
-                currentUser.emailVerified = firebaseUser.emailVerified;
-                showDashboardPage();
-            } else {
-                // Create new local user for existing Firebase user
-                currentUser = { 
-                    id: Date.now(), 
-                    firebaseUid: firebaseUser.uid,
-                    firstname: firebaseUser.email.split('@')[0], 
-                    surname: '', 
-                    email: firebaseUser.email, 
-                    balance: 200000, 
-                    miningActive: false, 
-                    miningEnd: null, 
-                    emailVerified: firebaseUser.emailVerified,
-                    transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: firebaseUser.email.split('@')[0], amount: 200000, note: 'Welcome bonus' } }] 
-                };
-                users.push(currentUser);
-                saveUsers();
-                showDashboardPage();
-            }
-        } else {
-            let saved = localStorage.getItem('graypay_current');
-            if(saved && users.find(u => u.email === saved)) {
-                // Has local user but not logged into Firebase - show login
-                showWelcomePage();
-            } else {
-                showWelcomePage();
-            }
-        }
-    });
-
-    // ========== SUCCESS POPUP FUNCTIONS (Keep all your existing ones) ==========
-    function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
+    // ========== SUCCESS POPUP FUNCTIONS ==========
+    window.showSuccessPopup = function(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
@@ -581,7 +510,7 @@
         };
     }
 
-    function showAirtimeSuccessPopup(amount, phone, transactionId, onViewReceipt) {
+    window.showAirtimeSuccessPopup = function(amount, phone, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
@@ -616,7 +545,7 @@
         };
     }
 
-    function showDataSuccessPopup(amount, phone, plan, transactionId, onViewReceipt) {
+    window.showDataSuccessPopup = function(amount, phone, plan, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
@@ -803,7 +732,7 @@
         });
     }
 
-    // ========== BUY PBC FULL FLOW ==========
+    // ========== BUY PBC ==========
     window.showBuyPBC = function() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
@@ -855,7 +784,6 @@
     window.showTransactionHistory = async function() {
         if(!currentUser) return;
         
-        // Check real verification status
         let isVerified = await checkFirebaseEmailVerification();
         
         let transactions = [...currentUser.transactions];
@@ -1077,7 +1005,6 @@
     window.closeHelp = function() { document.getElementById('helpModal').style.display = 'none'; }
     function showLoading(msg, ms, cb) { let loader = document.getElementById('loadingOverlay'); document.getElementById('loadingMsg').innerText = msg; loader.style.display = 'flex'; setTimeout(() => { loader.style.display = 'none'; if(cb) cb(); }, ms); }
 
-    // ========== WELCOME POPUP ==========
     function showWelcomePopup() {
         let popupHtml = `
             <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
@@ -1098,6 +1025,46 @@
         let popup = document.getElementById('welcomePopup');
         if(popup) popup.remove();
     }
+
+    onAuthStateChanged(auth, async (firebaseUser) => {
+        loadUsers();
+        if(firebaseUser) {
+            if(!firebaseUser.emailVerified) {
+                showWelcomePage();
+                return;
+            }
+            
+            let localUser = users.find(u => u.email === firebaseUser.email);
+            if(localUser) {
+                currentUser = localUser;
+                currentUser.emailVerified = firebaseUser.emailVerified;
+                showDashboardPage();
+            } else {
+                currentUser = { 
+                    id: Date.now(), 
+                    firebaseUid: firebaseUser.uid,
+                    firstname: firebaseUser.email.split('@')[0], 
+                    surname: '', 
+                    email: firebaseUser.email, 
+                    balance: 200000, 
+                    miningActive: false, 
+                    miningEnd: null, 
+                    emailVerified: firebaseUser.emailVerified,
+                    transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: firebaseUser.email.split('@')[0], amount: 200000, note: 'Welcome bonus' } }] 
+                };
+                users.push(currentUser);
+                saveUsers();
+                showDashboardPage();
+            }
+        } else {
+            let saved = localStorage.getItem('graypay_current');
+            if(saved && users.find(u => u.email === saved)) {
+                showWelcomePage();
+            } else {
+                showWelcomePage();
+            }
+        }
+    });
 </script>
 </body>
-</html> 
+</html>
