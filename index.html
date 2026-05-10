@@ -2,79 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gray Pay</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
-        .app { max-width: 450px; margin: 0 auto; background: #0a0a0a; min-height: 100vh; padding: 20px; padding-bottom: 80px; position: relative; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .back-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-        .help-btn { background: none; border: none; color: #10b981; font-size: 14px; cursor: pointer; }
+        body { background-color: #0a0a0a; font-family: Arial, sans-serif; color: #fff; }
+        .app { max-width: 450px; margin: 0 auto; background: #0a0a0a; min-height: 100vh; padding: 20px; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .back-btn, .help-btn { background: none; border: none; color: #10b981; font-size: 16px; cursor: pointer; }
         .logo { font-size: 32px; font-weight: bold; text-align: center; color: #10b981; margin-bottom: 20px; }
-        .balance-card { background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
-        .greeting { font-size: 18px; margin-bottom: 15px; }
-        .balance-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .balance-card { background: #10b981; border-radius: 24px; padding: 20px; margin-bottom: 20px; }
         .balance-amount { font-size: 36px; font-weight: bold; }
-        .withdraw-small { background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-size: 14px; border: none; color: white; cursor: pointer; }
-        .target-label { font-size: 14px; margin-top: 15px; }
+        .btn { width: 100%; padding: 14px; background: #10b981; border: none; border-radius: 12px; color: white; font-size: 16px; cursor: pointer; margin: 10px 0; }
+        .input-field { width: 100%; padding: 14px; background: #1f1f1f; border: none; border-radius: 12px; color: white; margin-bottom: 15px; }
+        .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #1a1a1a; padding: 20px; border-radius: 20px; margin: 20px 0; text-align: center; }
+        .service-icon { font-size: 30px; }
+        .service-label { font-size: 12px; color: #9ca3af; }
+        .hidden { display: none; }
+        .error { color: red; font-size: 12px; margin: 5px 0; }
+        .loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; }
+        .double-buttons { display: flex; gap: 15px; }
+        .double-buttons .btn { margin: 0; }
+        .withdraw-small { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; border: none; color: white; cursor: pointer; }
+        .balance-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
         .progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 8px 0; }
         .progress-fill { background: white; border-radius: 10px; height: 100%; width: 0%; }
-        .double-buttons { display: flex; gap: 15px; margin: 20px 0; }
-        .btn { flex: 1; padding: 14px; background: #10b981; border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; }
-        .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #1a1a1a; padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: center; cursor: pointer; }
-        .service-icon { background: #2a2a2a; width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 24px; }
-        .service-label { font-size: 12px; color: #9ca3af; }
-        .bottom-tabs { position: fixed; bottom: 0; left: 0; right: 0; max-width: 450px; margin: 0 auto; background: #1a1a1a; display: flex; justify-content: space-around; padding: 12px 20px; border-top: 1px solid #2a2a2a; }
-        .tab { color: #6b7280; font-size: 12px; cursor: pointer; }
-        .input-field { width: 100%; padding: 14px; background: #1f1f1f; border: 1px solid #2a2a2a; border-radius: 12px; color: white; margin-bottom: 15px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: #1f1f1f; border-radius: 20px; padding: 20px; width: 85%; max-width: 350px; }
-        .loading { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 2000; flex-direction: column; }
-        .hidden { display: none; }
-        .text-center { text-align: center; }
-        .mt-20 { margin-top: 20px; }
-        .error { color: #ef4444; font-size: 12px; }
         .info-box { background: #1f1f1f; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .min-withdrawal { background: #1f1f1f; padding: 8px; border-radius: 8px; text-align: center; font-size: 14px; color: #fbbf24; margin-top: 10px; }
+        .bottom-tabs { position: fixed; bottom: 0; left: 0; right: 0; max-width: 450px; margin: 0 auto; background: #1a1a1a; display: flex; justify-content: space-around; padding: 12px; }
+        .tab { color: #6b7280; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
-<div class="app" id="app">
+<div class="app">
+    <!-- Welcome Page -->
     <div id="welcomePage">
-        <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
+        <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓ Help</button></div>
         <div class="logo">GRAY PAY</div>
-        <div class="text-center" style="color:#9ca3af; margin-bottom:30px;">Welcome!</div>
-        <div class="text-center" style="color:#9ca3af; margin-bottom:30px;">Create your account and get welcome bonus. Start mining every hour and withdraw your earnings anytime.</div>
+        <div class="text-center" style="color:#9ca3af; margin:20px 0;">Create your account and get welcome bonus.</div>
         <button class="btn" onclick="showSignupPage()">Get Started</button>
     </div>
 
+    <!-- Signup Page -->
     <div id="signupPage" class="hidden">
         <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="logo">GRAY PAY</div>
         <input type="text" id="signupFirstname" class="input-field" placeholder="First Name">
         <input type="text" id="signupSurname" class="input-field" placeholder="Surname">
         <input type="email" id="signupEmail" class="input-field" placeholder="Email Address">
-        <input type="password" id="signupPassword" class="input-field" placeholder="Password (min 4 chars)">
+        <input type="password" id="signupPassword" class="input-field" placeholder="Password">
         <div id="signupError" class="error"></div>
         <button class="btn" onclick="signup()">Create account</button>
-        <div class="text-center mt-20">Already have an account? <span style="color:#10b981; cursor:pointer;" onclick="showLoginPage()">Sign in</span></div>
+        <div class="text-center mt-20">Already have account? <span style="color:#10b981; cursor:pointer;" onclick="showLoginPage()">Sign in</span></div>
     </div>
 
+    <!-- Login Page -->
     <div id="loginPage" class="hidden">
         <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="logo">GRAY PAY</div>
         <h2>Welcome Back!</h2>
-        <div style="color:#9ca3af; margin-bottom:20px;">Log in to your account to continue</div>
         <input type="email" id="loginEmail" class="input-field" placeholder="Your Email">
         <input type="password" id="loginPassword" class="input-field" placeholder="Password">
         <div id="loginError" class="error"></div>
         <button class="btn" onclick="login()">Sign In</button>
-        <div class="text-center mt-20">Don't have an account? <span style="color:#10b981; cursor:pointer;" onclick="showSignupPage()">Create one</span></div>
+        <div class="text-center mt-20">Don't have account? <span style="color:#10b981; cursor:pointer;" onclick="showSignupPage()">Create one</span></div>
     </div>
 
+    <!-- Dashboard -->
     <div id="dashboardPage" class="hidden">
-        <div class="header"><div></div><div style="display:flex; gap:15px;"><button class="help-btn" onclick="showHelp()">❓</button></div></div>
+        <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓</button></div>
         <div class="balance-card">
             <div class="greeting">Hi, <span id="userName">User</span></div>
             <div class="balance-row"><span>Available Balance</span><button class="withdraw-small" onclick="showWithdrawPage()">Withdraw</button></div>
@@ -87,23 +83,33 @@
         <div class="services-grid">
             <div onclick="openWhatsApp()"><div class="service-icon">🛡️</div><div class="service-label">Support</div></div>
             <div onclick="openWhatsApp()"><div class="service-icon">👥</div><div class="service-label">Group</div></div>
-            <div onclick="alert('Earn feature coming soon')"><div class="service-icon">⛏️</div><div class="service-label">Earn</div></div>
+            <div onclick="alert('Earn coming soon')"><div class="service-icon">⛏️</div><div class="service-label">Earn</div></div>
             <div onclick="showProfile()"><div class="service-icon">👤</div><div class="service-label">Profile</div></div>
         </div>
         <div class="services-grid">
             <div onclick="alert('Buy PBC - Contact support')"><div class="service-icon">💳</div><div class="service-label">Buy PBC</div></div>
-            <div onclick="alert('Watch feature coming soon')"><div class="service-icon">📺</div><div class="service-label">Watch</div></div>
+            <div onclick="alert('Watch coming soon')"><div class="service-icon">📺</div><div class="service-label">Watch</div></div>
             <div onclick="showBuyAirtime()"><div class="service-icon">📱</div><div class="service-label">Airtime</div></div>
             <div onclick="showBuyData()"><div class="service-icon">🌐</div><div class="service-label">Data</div></div>
         </div>
-        <div class="bottom-tabs"><div class="tab" onclick="alert('Wallet tab')">Wallet</div><div class="tab" onclick="alert('Social tab')">Social</div><div class="tab" onclick="alert('Data tab')">Data</div><div class="tab" onclick="alert('Profile tab')">Profile</div></div>
+        <div class="bottom-tabs"><div class="tab">Wallet</div><div class="tab">Social</div><div class="tab">Data</div><div class="tab">Profile</div></div>
     </div>
 
     <div id="dynamicContent"></div>
 </div>
 
-<div id="helpModal" class="modal"><div class="modal-content"><h3>Contact Support</h3><button class="btn" onclick="window.open('https://wa.me/2348168909003','_blank')">💬 WhatsApp</button><button class="btn" style="margin-top: 12px;" onclick="location.href='mailto:graypay423492@gmail.com'">📧 Email</button><button class="btn" style="margin-top: 12px;" onclick="closeHelp()">Close</button></div></div>
-<div id="loadingOverlay" class="loading"><div>⏳</div><div id="loadingMsg">Processing...</div></div>
+<div id="helpModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:1000;">
+    <div style="background:#1f1f1f; border-radius:20px; padding:20px; width:300px; text-align:center;">
+        <h3>Contact Support</h3>
+        <button class="btn" onclick="window.open('https://wa.me/2348168909003','_blank')">WhatsApp</button>
+        <button class="btn" style="margin-top:10px;" onclick="closeHelp()">Close</button>
+    </div>
+</div>
+
+<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); align-items:center; justify-content:center; z-index:2000; flex-direction:column;">
+    <div>⏳</div>
+    <div id="loadingMsg">Processing...</div>
+</div>
 
 <script>
     let currentUserData = null;
@@ -113,14 +119,14 @@
         document.getElementById('signupPage').classList.add('hidden');
         document.getElementById('loginPage').classList.add('hidden');
         document.getElementById('dashboardPage').classList.add('hidden');
-        let el = document.getElementById(id);
-        if(el) el.classList.remove('hidden');
+        document.getElementById(id).classList.remove('hidden');
         if(id === 'dashboardPage' && currentUserData) updateDashboard();
     }
     
     window.showWelcomePage = () => showPage('welcomePage');
     window.showSignupPage = () => showPage('signupPage');
     window.showLoginPage = () => showPage('loginPage');
+    window.showDashboardPage = () => { updateDashboard(); showPage('dashboardPage'); };
     
     function updateDashboard() {
         if(currentUserData) {
@@ -131,8 +137,6 @@
             document.getElementById('progressFill').style.width = percent + '%';
         }
     }
-    
-    window.showDashboardPage = () => { updateDashboard(); showPage('dashboardPage'); };
     
     window.signup = () => {
         let fn = document.getElementById('signupFirstname').value.trim();
@@ -148,7 +152,6 @@
         document.getElementById('signupError').innerText = '';
         showLoading('Creating account...');
         
-        // EXACTLY 10 SECONDS - THEN WORKS
         setTimeout(() => {
             let users = JSON.parse(localStorage.getItem('graypay_users') || '{}');
             if(users[em]) {
@@ -162,8 +165,7 @@
                 surname: sn,
                 email: em,
                 password: pw,
-                balance: 200000,
-                transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString() }]
+                balance: 200000
             };
             
             users[em] = userData;
@@ -173,8 +175,9 @@
             currentUserData = userData;
             hideLoading();
             showDashboardPage();
-            showWelcomePopup();
-        }, 10000); // 10 SECONDS
+            
+            alert(`Welcome ${fn}! You received ₦200,000 bonus!`);
+        }, 10000);
     };
     
     window.login = () => {
@@ -204,196 +207,110 @@
     window.logout = () => {
         localStorage.removeItem('graypay_currentUser');
         currentUserData = null;
-        closeDynamic();
         showWelcomePage();
     };
     
     window.showProfile = () => {
         if(!currentUserData) return;
         document.getElementById('dynamicContent').innerHTML = `
-            <div id="profileView">
-                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
+            <div>
+                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button></div>
                 <div class="logo">Profile</div>
-                <div class="info-box">Full Name: ${currentUserData.firstname} ${currentUserData.surname}</div>
+                <div class="info-box">Name: ${currentUserData.firstname} ${currentUserData.surname}</div>
                 <div class="info-box">Email: ${currentUserData.email}</div>
                 <div class="info-box">Balance: ₦${currentUserData.balance}</div>
                 <button class="btn" onclick="logout()">Log Out</button>
             </div>`;
-        showPage('dashboardPage'); 
-        document.getElementById('dashboardPage').classList.add('hidden'); 
-        document.getElementById('profileView').style.display = 'block'; 
-        document.getElementById('profileView').style.padding = '20px';
+        document.getElementById('dashboardPage').classList.add('hidden');
+        document.getElementById('dynamicContent').style.display = 'block';
     };
     
     window.showWithdrawPage = () => {
         if(!currentUserData) return;
-        let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
+        let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'PalmPay', 'Opay'];
         let opts = banks.map(b => `<option>${b}</option>`).join('');
         document.getElementById('dynamicContent').innerHTML = `
-            <div id="withdrawView">
-                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
-                <h2>Transfer To Bank</h2>
+            <div>
+                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button></div>
+                <h2>Withdraw</h2>
                 <input type="text" id="accName" class="input-field" placeholder="Account Name">
                 <input type="text" id="accNumber" class="input-field" placeholder="Account Number">
                 <select id="bankName" class="input-field">${opts}</select>
                 <input type="number" id="withdrawAmount" class="input-field" placeholder="Amount">
                 <div class="info-box">Available: ₦${currentUserData.balance}</div>
-                <div class="min-withdrawal">⚠️ Minimum withdrawal: ₦100,000</div>
+                <div class="min-withdrawal">⚠️ Minimum: ₦100,000</div>
                 <button class="btn" onclick="processWithdraw()">Submit</button>
             </div>`;
-        showPage('dashboardPage'); 
-        document.getElementById('dashboardPage').classList.add('hidden'); 
-        document.getElementById('withdrawView').style.display = 'block'; 
-        document.getElementById('withdrawView').style.padding = '20px';
+        document.getElementById('dashboardPage').classList.add('hidden');
+        document.getElementById('dynamicContent').style.display = 'block';
     };
     
     window.processWithdraw = () => {
         let amt = parseInt(document.getElementById('withdrawAmount').value);
-        let accName = document.getElementById('accName').value;
-        let accNumber = document.getElementById('accNumber').value;
-        let bankName = document.getElementById('bankName').value;
-        
         if(amt < 100000) { alert('Minimum withdrawal is ₦100,000'); return; }
         if(amt > currentUserData.balance) { alert('Insufficient balance'); return; }
-        if(!accName || !accNumber) { alert('Please fill account name and number'); return; }
         
-        showLoading('Processing withdrawal...');
-        
+        showLoading('Processing...');
         setTimeout(() => {
             currentUserData.balance -= amt;
-            
             let users = JSON.parse(localStorage.getItem('graypay_users') || '{}');
             users[currentUserData.email] = currentUserData;
             localStorage.setItem('graypay_users', JSON.stringify(users));
             localStorage.setItem('graypay_currentUser', JSON.stringify(currentUserData));
-            
             hideLoading();
-            alert(`Withdrawal of ₦${amt} processed successfully!`);
+            alert(`Withdrawal of ₦${amt} submitted!`);
             closeDynamic();
             showDashboardPage();
         }, 2000);
     };
     
     window.showBuyAirtime = () => {
-        if(!currentUserData) return;
         document.getElementById('dynamicContent').innerHTML = `
-            <div id="airtimeView">
-                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
+            <div>
+                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button></div>
                 <h2>Buy Airtime</h2>
                 <input type="text" id="airPhone" class="input-field" placeholder="Phone Number">
                 <input type="number" id="airAmount" class="input-field" placeholder="Amount">
-                <button class="btn" onclick="processAirtime()">Buy Airtime</button>
+                <button class="btn" onclick="alert('Airtime purchased!')">Buy</button>
             </div>`;
-        showPage('dashboardPage'); 
-        document.getElementById('dashboardPage').classList.add('hidden'); 
-        document.getElementById('airtimeView').style.display = 'block'; 
-        document.getElementById('airtimeView').style.padding = '20px';
-    };
-    
-    window.processAirtime = () => {
-        let amt = parseInt(document.getElementById('airAmount').value);
-        let phone = document.getElementById('airPhone').value;
-        
-        if(!phone || !amt) { alert('Fill all fields'); return; }
-        if(amt > currentUserData.balance) { alert('Insufficient balance'); return; }
-        
-        currentUserData.balance -= amt;
-        
-        let users = JSON.parse(localStorage.getItem('graypay_users') || '{}');
-        users[currentUserData.email] = currentUserData;
-        localStorage.setItem('graypay_users', JSON.stringify(users));
-        localStorage.setItem('graypay_currentUser', JSON.stringify(currentUserData));
-        
-        alert(`Airtime of ₦${amt} purchased for ${phone}!`);
-        closeDynamic();
-        showDashboardPage();
+        document.getElementById('dashboardPage').classList.add('hidden');
+        document.getElementById('dynamicContent').style.display = 'block';
     };
     
     window.showBuyData = () => {
-        if(!currentUserData) return;
         document.getElementById('dynamicContent').innerHTML = `
-            <div id="dataView">
-                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
+            <div>
+                <div class="header"><button class="back-btn" onclick="closeDynamic()">←</button></div>
                 <h2>Buy Data</h2>
                 <input type="text" id="dataPhone" class="input-field" placeholder="Phone Number">
-                <select id="dataPlan" class="input-field">
-                    <option value="500">500MB - ₦500</option>
-                    <option value="1000">1GB - ₦1000</option>
-                    <option value="2000">2GB - ₦2000</option>
-                    <option value="5000">5GB - ₦5000</option>
-                    <option value="10000">10GB - ₦10000</option>
-                </select>
-                <button class="btn" onclick="processData()">Buy Data</button>
+                <select class="input-field"><option>1GB - ₦1000</option><option>2GB - ₦2000</option></select>
+                <button class="btn" onclick="alert('Data purchased!')">Buy</button>
             </div>`;
-        showPage('dashboardPage'); 
-        document.getElementById('dashboardPage').classList.add('hidden'); 
-        document.getElementById('dataView').style.display = 'block'; 
-        document.getElementById('dataView').style.padding = '20px';
+        document.getElementById('dashboardPage').classList.add('hidden');
+        document.getElementById('dynamicContent').style.display = 'block';
     };
     
-    window.processData = () => {
-        let phone = document.getElementById('dataPhone').value;
-        let plan = document.getElementById('dataPlan');
-        let amt = parseInt(plan.value);
-        
-        if(!phone) { alert('Enter phone number'); return; }
-        if(amt > currentUserData.balance) { alert('Insufficient balance'); return; }
-        
-        currentUserData.balance -= amt;
-        
-        let users = JSON.parse(localStorage.getItem('graypay_users') || '{}');
-        users[currentUserData.email] = currentUserData;
-        localStorage.setItem('graypay_users', JSON.stringify(users));
-        localStorage.setItem('graypay_currentUser', JSON.stringify(currentUserData));
-        
-        alert(`Data plan purchased for ${phone}!`);
-        closeDynamic();
+    window.closeDynamic = () => {
+        document.getElementById('dynamicContent').innerHTML = '';
+        document.getElementById('dynamicContent').style.display = 'none';
         showDashboardPage();
-    };
-    
-    window.closeDynamic = () => { 
-        document.getElementById('dynamicContent').innerHTML = ''; 
-        showDashboardPage(); 
     };
     
     window.openWhatsApp = () => { window.open('https://wa.me/2348168909003','_blank'); };
     window.showHelp = () => { document.getElementById('helpModal').style.display = 'flex'; };
     window.closeHelp = () => { document.getElementById('helpModal').style.display = 'none'; };
     
-    function showWelcomePopup() {
-        let popupHtml = `
-            <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
-                <div style="background: #1f1f1f; border-radius: 20px; padding: 30px; width: 85%; max-width: 350px; text-align: center;">
-                    <div style="font-size: 50px; margin-bottom: 15px;">🎉</div>
-                    <h2 style="color: #10b981; margin-bottom: 10px;">Welcome ${currentUserData.firstname}!</h2>
-                    <p style="color: #9ca3af; margin-bottom: 20px;">You have received</p>
-                    <div style="font-size: 36px; font-weight: bold; color: #10b981; margin-bottom: 20px;">₦200,000</div>
-                    <p style="color: #9ca3af; margin-bottom: 25px;">Start mining every hour and withdraw your earnings anytime!</p>
-                    <button class="btn" onclick="closeWelcomePopup()" style="background: #10b981; padding: 12px 24px;">Get Started</button>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', popupHtml);
-    }
-    
-    window.closeWelcomePopup = () => {
-        let popup = document.getElementById('welcomePopup');
-        if(popup) popup.remove();
-    };
-    
     function showLoading(msg) {
-        let loader = document.getElementById('loadingOverlay');
         document.getElementById('loadingMsg').innerText = msg;
-        loader.style.display = 'flex';
+        document.getElementById('loadingOverlay').style.display = 'flex';
     }
-    
     function hideLoading() {
         document.getElementById('loadingOverlay').style.display = 'none';
     }
     
-    let savedUser = localStorage.getItem('graypay_currentUser');
-    if(savedUser) {
-        currentUserData = JSON.parse(savedUser);
+    let saved = localStorage.getItem('graypay_currentUser');
+    if(saved) {
+        currentUserData = JSON.parse(saved);
         showDashboardPage();
     } else {
         showWelcomePage();
