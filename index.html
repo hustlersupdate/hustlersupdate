@@ -117,6 +117,34 @@
             border: 1px solid #0a0a0a;
             display: none;
         }
+        .mining-status-box {
+            background: #1f3a2f;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #10b981;
+            text-align: center;
+        }
+        .mining-notification {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 3000;
+            animation: fadeOut 3s forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            70% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-20px); display: none; }
+        }
     </style>
 </head>
 <body>
@@ -213,13 +241,136 @@
     function showSignupPage() { showPage('signupPage'); }
     function showLoginPage() { showPage('loginPage'); }
 
+    // ========== FIXED MINING FUNCTIONS ==========
+    function checkAndClaimMiningRewards() {
+        if(!currentUser || !currentUser.miningActive) return;
+        
+        let now = Date.now();
+        
+        // Check if mining period is over
+        if(now >= currentUser.miningEnd) {
+            let totalEarned = 200000;
+            let alreadyClaimed = currentUser.miningClaimed || 0;
+            let remaining = totalEarned - alreadyClaimed;
+            
+            if(remaining > 0) {
+                currentUser.balance += remaining;
+                currentUser.miningClaimed = totalEarned;
+                
+                currentUser.transactions.unshift({
+                    id: 'TXN' + Date.now(),
+                    type: 'Mining Complete',
+                    amount: remaining,
+                    date: new Date().toLocaleString(),
+                    dateObj: new Date(),
+                    status: 'Success',
+                    fullDetails: {
+                        transactionType: 'Mining Reward',
+                        amount: remaining,
+                        note: '24-hour mining completed!'
+                    }
+                });
+                saveUsers();
+                showMiningNotification(remaining, 24);
+            }
+            
+            currentUser.miningActive = false;
+            saveUsers();
+            return;
+        }
+        
+        // Calculate rewards based on time passed
+        let hoursPassed = Math.floor((now - (currentUser.lastClaimTime || currentUser.miningStart)) / (60 * 60 * 1000));
+        
+        if(hoursPassed > 0) {
+            let hourlyRate = Math.floor(200000 / 24);
+            let reward = hoursPassed * hourlyRate;
+            let totalPossible = 200000;
+            let alreadyClaimed = currentUser.miningClaimed || 0;
+            
+            if(alreadyClaimed + reward > totalPossible) {
+                reward = totalPossible - alreadyClaimed;
+            }
+            
+            if(reward > 0) {
+                currentUser.balance += reward;
+                currentUser.miningClaimed = (currentUser.miningClaimed || 0) + reward;
+                currentUser.lastClaimTime = now;
+                
+                currentUser.transactions.unshift({
+                    id: 'TXN' + Date.now(),
+                    type: 'Mining Reward',
+                    amount: reward,
+                    date: new Date().toLocaleString(),
+                    dateObj: new Date(),
+                    status: 'Success',
+                    fullDetails: {
+                        transactionType: 'Hourly Mining',
+                        amount: reward,
+                        note: hoursPassed + ' hour(s) of mining rewards'
+                    }
+                });
+                saveUsers();
+                showMiningNotification(reward, hoursPassed);
+            }
+        }
+    }
+    
+    function showMiningNotification(amount, hours) {
+        let notif = document.createElement('div');
+        notif.className = 'mining-notification';
+        notif.innerHTML = '⛏️ You earned ₦' + amount.toLocaleString() + ' from ' + hours + ' hour(s) of mining!';
+        document.body.appendChild(notif);
+        setTimeout(function() { if(notif) notif.remove(); }, 3000);
+    }
+
+    function startMining() {
+        if(!currentUser) return;
+        if(currentUser.miningActive) { 
+            alert('Mining already active! Check back later for rewards.');
+            return; 
+        }
+        
+        currentUser.miningActive = true;
+        currentUser.miningStart = Date.now();
+        currentUser.miningEnd = Date.now() + (24 * 60 * 60 * 1000);
+        currentUser.lastClaimTime = Date.now();
+        currentUser.miningClaimed = 0;
+        saveUsers();
+        
+        alert('✅ Mining started! You will earn ₦200,000 over 24 hours. Come back anytime to claim your rewards.');
+    }
+
     function updateDashboard() {
         if(currentUser) {
+            checkAndClaimMiningRewards();
+            
             document.getElementById('userName').innerText = currentUser.firstname;
-            document.getElementById('userBalance').innerHTML = `₦${currentUser.balance}`;
+            document.getElementById('userBalance').innerHTML = '₦' + currentUser.balance.toLocaleString();
             let percent = (currentUser.balance / 200000) * 100;
             if(percent > 100) percent = 100;
             document.getElementById('progressFill').style.width = percent + '%';
+            
+            // Show mining status if active
+            let existingStatus = document.getElementById('miningStatusBox');
+            if(currentUser.miningActive) {
+                let remainingHours = Math.ceil((currentUser.miningEnd - Date.now()) / (60 * 60 * 1000));
+                if(remainingHours < 0) remainingHours = 0;
+                let claimed = currentUser.miningClaimed || 0;
+                
+                if(!existingStatus) {
+                    let statusDiv = document.createElement('div');
+                    statusDiv.id = 'miningStatusBox';
+                    statusDiv.className = 'mining-status-box';
+                    document.querySelector('.balance-card').after(statusDiv);
+                }
+                let statusEl = document.getElementById('miningStatusBox');
+                if(statusEl) {
+                    statusEl.innerHTML = '⛏️ Mining active! ~' + remainingHours + ' hour(s) remaining | Claimed: ₦' + claimed.toLocaleString() + ' / ₦200,000';
+                }
+            } else {
+                if(existingStatus) existingStatus.remove();
+            }
         }
     }
 
@@ -261,7 +412,7 @@
         if(pw.length < 8) { document.getElementById('signupError').innerText = 'Password must be 8+ characters'; return; }
         if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
         for(let u of users) if(u.email === em) { document.getElementById('signupError').innerText = 'Email exists'; return; }
-        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] };
+        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, miningStart: null, lastClaimTime: null, miningClaimed: 0, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] };
         users.push(newUser); saveUsers(); currentUser = newUser; localStorage.setItem('graypay_current', em);
         
         // Send Firebase verification email in background (NO POPUP)
@@ -637,23 +788,6 @@
     }
     function goBackToBank() { showBankDetails(); }
 
-    // ========== MINING ==========
-    function startMining() {
-        if(!currentUser) return;
-        if(currentUser.miningActive) { alert('Mining already active!'); return; }
-        currentUser.miningActive = true;
-        currentUser.miningEnd = Date.now() + 24*60*60*1000;
-        saveUsers();
-        alert('Mining started! Balance increases every hour.');
-        if(miningTimer) clearInterval(miningTimer);
-        miningTimer = setInterval(() => {
-            if(!currentUser || !currentUser.miningActive) { clearInterval(miningTimer); return; }
-            if(Date.now() >= currentUser.miningEnd) { currentUser.miningActive = false; clearInterval(miningTimer); saveUsers(); alert('Mining complete! +₦200,000'); updateDashboard(); return; }
-            currentUser.balance += Math.floor(200000/24);
-            saveUsers(); updateDashboard();
-        }, 3600000);
-    }
-
     // ========== TRANSACTION HISTORY ==========
     function showTransactionHistory() {
         if(!currentUser) return;
@@ -695,6 +829,9 @@
                     desc = `You bought ${t.plan} data for ${t.phone}`;
                 } else if (t.type === 'Bonus') {
                     desc = `You received a welcome bonus`;
+                    isNegative = false;
+                } else if (t.type === 'Mining Reward' || t.type === 'Mining Complete') {
+                    desc = t.fullDetails?.note || `Mining reward`;
                     isNegative = false;
                 }
                 
@@ -756,11 +893,12 @@
         let fees = details.fees || 0;
         let taxes = details.taxes || 0;
         let sender = details.sender || currentUser.firstname + ' ' + currentUser.surname;
-        let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : 'Bank Transfer');
+        let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Mining System' : 'Bank Transfer');
         let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : '****');
-        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : 'Bank');
+        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gray Pay' : 'Bank');
         let transId = details.transactionId || transaction.id || 'N/A';
-        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gray Pay' : `Transaction via Gray Pay`);
+        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gray Pay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : 'Transaction via Gray Pay');
+        let isPositive = (type === 'Bonus' || type === 'Mining Reward' || type === 'Mining Complete');
         
         let detailsHtml = `
             <div id="transactionDetailView">
@@ -770,7 +908,7 @@
                 </div>
                 <h2>Transaction details</h2>
                 <div style="text-align: center; margin: 20px 0;">
-                    <div style="font-size: 48px; font-weight: bold; color: #f87171;">-₦${amount.toLocaleString()}.00</div>
+                    <div style="font-size: 48px; font-weight: bold; color: ${isPositive ? '#34d399' : '#f87171'};">${isPositive ? '+' : '-'}₦${amount.toLocaleString()}.00</div>
                     <div style="color: #10b981; margin-top: 5px;">${status}</div>
                 </div>
                 
@@ -780,7 +918,7 @@
                 </div>
                 <div class="transaction-detail-row">
                     <span class="transaction-detail-label">Amount</span>
-                    <span class="transaction-detail-value">-₦${amount.toLocaleString()}.00</span>
+                    <span class="transaction-detail-value">${isPositive ? '+' : '-'}₦${amount.toLocaleString()}.00</span>
                 </div>
                 <div class="transaction-detail-row">
                     <span class="transaction-detail-label">Fees</span>
