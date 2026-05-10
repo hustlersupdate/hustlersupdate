@@ -61,7 +61,7 @@
         .receipt-actions { display: flex; gap: 12px; margin-top: 20px; }
         .receipt-actions .btn { flex: 1; }
 
-        /* Splash Loading Screen - NEW */
+        /* Splash Loading Screen */
         .splash-loading {
             position: fixed;
             top: 0;
@@ -97,6 +97,29 @@
             color: #9ca3af;
             margin-top: 10px;
             font-size: 14px;
+        }
+
+        /* Profile notification badge */
+        .profile-icon-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        .profile-badge {
+            position: absolute;
+            top: -8px;
+            right: -12px;
+            background-color: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+            border: 1px solid #0a0a0a;
         }
     </style>
 </head>
@@ -154,7 +177,13 @@
             <div onclick="openWhatsApp()"><div class="service-icon">🛡️</div><div class="service-label">Support</div></div>
             <div onclick="openWhatsApp()"><div class="service-icon">👥</div><div class="service-label">Group</div></div>
             <div onclick="startMining()"><div class="service-icon">⛏️</div><div class="service-label">Earn</div></div>
-            <div onclick="showProfile()"><div class="service-icon">👤</div><div class="service-label">Profile</div></div>
+            <div id="profileIconDiv" class="profile-icon-wrapper" onclick="showProfile()">
+                <div style="position: relative; display: inline-block;">
+                    <div class="service-icon">👤</div>
+                    <span id="profileNotificationBadge" class="profile-badge" style="display: none;">1</span>
+                </div>
+                <div class="service-label">Profile</div>
+            </div>
         </div>
         <div class="services-grid">
             <div onclick="showBuyPBC()"><div class="service-icon">💳</div><div class="service-label">Buy PBC</div></div>
@@ -204,9 +233,13 @@
         }
     }
 
-    function showDashboardPage() { updateDashboard(); showPage('dashboardPage'); }
+    function showDashboardPage() { 
+        updateDashboard(); 
+        showPage('dashboardPage');
+        checkProfileNotification();
+    }
 
-    // ========== SPLASH LOADING SCREEN (ADDED - DO NOT REMOVE) ==========
+    // ========== SPLASH LOADING SCREEN ==========
     function showSplashLoading(callback) {
         let splashDiv = document.createElement('div');
         splashDiv.className = 'splash-loading';
@@ -274,12 +307,65 @@
         showWelcomePage(); 
     }
 
+    // ========== PROFILE NOTIFICATION ==========
+    function showProfileNotification() {
+        let badge = document.getElementById('profileNotificationBadge');
+        if(badge) {
+            badge.style.display = 'inline-block';
+        }
+    }
+    
+    function hideProfileNotification() {
+        let badge = document.getElementById('profileNotificationBadge');
+        if(badge) {
+            badge.style.display = 'none';
+        }
+        localStorage.setItem('profile_notification_seen', 'true');
+    }
+    
+    function checkProfileNotification() {
+        let seen = localStorage.getItem('profile_notification_seen');
+        if(!seen && currentUser) {
+            showProfileNotification();
+        }
+    }
+
+    // ========== EMAIL VERIFICATION ==========
+    function isEmailVerified() {
+        let verified = localStorage.getItem('email_verified_' + (currentUser ? currentUser.email : ''));
+        return verified === 'true';
+    }
+    
+    function sendVerificationEmail() {
+        alert("📧 Verification link has been sent to: " + currentUser.email + "\n\nPlease check your inbox and click the link to verify your email address.\n\n(For demo purposes, this is a simulation. In production, this would send a real email.)");
+        
+        // For demo - mark as verified after clicking. Remove this when using real email service
+        localStorage.setItem('email_verified_' + currentUser.email, 'true');
+        
+        // Refresh views to hide warnings
+        if(document.getElementById('historyView')) {
+            showTransactionHistory();
+        }
+        if(document.getElementById('profileView')) {
+            showProfile();
+        }
+    }
+
     // ========== PROFILE ==========
     function showProfile() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div><button class="btn" onclick="logout()">Log Out</button></div>`;
+        hideProfileNotification();
+        
+        let verificationMessage = '';
+        let isVerified = isEmailVerified();
+        if(!isVerified) {
+            verificationMessage = `<div class="warning-box" style="background:#1f1f1f; border-left-color:#fbbf24; margin-bottom: 15px;">📧 <strong>Email Verification Required!</strong><br>Your email (${currentUser.email}) has not been verified yet.<br><br><button class="btn" style="background:#fbbf24; color:#000; margin-top: 10px;" onclick="sendVerificationEmail()">📧 Verify Email Now</button></div>`;
+        }
+        
+        document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div>${verificationMessage}<button class="btn" onclick="logout()">Log Out</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('profileView').style.display = 'block'; document.getElementById('profileView').style.padding = '20px';
     }
+    
     function logout() { 
         showSplashLoading(() => {
             currentUser = null; 
@@ -661,6 +747,21 @@
             historyHtml += `</div>`;
         }
         
+        // Add email verification warning at the top if not verified
+        let verificationWarning = '';
+        let isVerified = localStorage.getItem('email_verified_' + currentUser.email) === 'true';
+        if(!isVerified) {
+            verificationWarning = `
+                <div class="warning-box" style="background:#1f1f1f; border-left-color:#fbbf24; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>📧 Verify Your Email</strong><br>
+                        <small style="color:#9ca3af;">Verify your email to secure your account</small>
+                    </div>
+                    <button class="btn" style="background:#fbbf24; color:#000; padding: 8px 16px; font-size: 12px;" onclick="sendVerificationEmail()">Verify</button>
+                </div>
+            `;
+        }
+        
         document.getElementById('dynamicContent').innerHTML = `
             <div id="historyView">
                 <div class="header">
@@ -668,6 +769,7 @@
                     <button class="help-btn" onclick="showHelp()">❓</button>
                 </div>
                 <h2>Transaction history</h2>
+                ${verificationWarning}
                 ${historyHtml || '<div class="text-center" style="color:#9ca3af; padding: 40px;">No transactions yet</div>'}
             </div>
         `;
