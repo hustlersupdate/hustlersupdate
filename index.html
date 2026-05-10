@@ -185,9 +185,9 @@
         showWelcomePopup();
     }
 
-    // ========== LOGIN (FIXED: Added loadUsers() at the beginning) ==========
+    // ========== LOGIN ==========
     function login() {
-        loadUsers();  // <--- THIS IS THE ONLY CHANGE
+        loadUsers();
         let em = document.getElementById('loginEmail').value.trim();
         let pw = document.getElementById('loginPassword').value;
         for(let u of users) if(u.email === em && u.password === pw) { 
@@ -199,7 +199,21 @@
         document.getElementById('loginError').innerText = 'Invalid email or password';
     }
 
-    function autoLogin() { loadUsers(); let saved = localStorage.getItem('graypay_current'); if(saved) { for(let u of users) if(u.email === saved) { currentUser = u; showDashboardPage(); return; } } showWelcomePage(); }
+    // ========== FIXED AUTO LOGIN ==========
+    function autoLogin() { 
+        loadUsers(); 
+        let saved = localStorage.getItem('graypay_current'); 
+        if(saved) { 
+            for(let u of users) { 
+                if(u.email === saved) { 
+                    currentUser = u; 
+                    showDashboardPage(); 
+                    return; 
+                } 
+            } 
+        } 
+        showWelcomePage(); 
+    }
 
     // ========== PROFILE ==========
     function showProfile() {
@@ -752,7 +766,11 @@
         if(popup) popup.remove();
     }
 
-    autoLogin();
+    // ========== FIX: Ensure users load before auto-login ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers();
+        autoLogin();
+    });
 </script>
 </body>
 </html>
