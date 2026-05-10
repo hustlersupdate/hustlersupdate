@@ -4,31 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Gray Pay - Complete</title>
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyDRQsnce5A337wRzOjjwEcgiXDgplJq5lU",
-            authDomain: "growfastng.firebaseapp.com",
-            projectId: "growfastng",
-            storageBucket: "growfastng.firebasestorage.app",
-            messagingSenderId: "133938265658",
-            appId: "1:133938265658:web:4396fd308606de3ad43f03",
-            measurementId: "G-0K8H201KX0"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        
-        window.auth = auth;
-        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.sendEmailVerification = sendEmailVerification;
-        window.signOut = signOut;
-        window.onAuthStateChanged = onAuthStateChanged;
-    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
@@ -69,6 +44,7 @@
         .copy-item { background: #2a2a2a; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .copy-text { font-size: 16px; font-weight: bold; }
         .copy-icon { color: #10b981; font-size: 14px; }
+        /* Transaction history styles */
         .history-date-group { margin-bottom: 20px; }
         .history-date { color: #10b981; font-size: 14px; font-weight: bold; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #2a2a2a; }
         .history-item { background: #1a1a1a; border-radius: 12px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
@@ -84,6 +60,8 @@
         .transaction-detail-value { color: #fff; font-size: 14px; font-weight: 500; text-align: right; }
         .receipt-actions { display: flex; gap: 12px; margin-top: 20px; }
         .receipt-actions .btn { flex: 1; }
+
+        /* Splash Loading Screen - NEW */
         .splash-loading {
             position: fixed;
             top: 0;
@@ -120,31 +98,11 @@
             margin-top: 10px;
             font-size: 14px;
         }
-        .profile-icon-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-        }
-        .profile-badge {
-            position: absolute;
-            top: -8px;
-            right: -12px;
-            background-color: #ef4444;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 2px 5px;
-            border-radius: 50%;
-            min-width: 18px;
-            text-align: center;
-            border: 1px solid #0a0a0a;
-        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
+    <!-- WELCOME PAGE -->
     <div id="welcomePage">
         <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
         <div class="logo">GRAY PAY</div>
@@ -153,8 +111,9 @@
         <button class="btn" onclick="showSignupPage()">Get Started</button>
     </div>
 
+    <!-- SIGNUP PAGE -->
     <div id="signupPage" class="hidden">
-        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
+        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
         <div class="logo">GRAY PAY</div>
         <input type="text" id="signupFirstname" class="input-field" placeholder="First Name">
         <input type="text" id="signupSurname" class="input-field" placeholder="Surname">
@@ -166,8 +125,9 @@
         <div class="text-center mt-20">Already have an account? <span style="color:#10b981; cursor:pointer;" onclick="showLoginPage()">Sign in</span></div>
     </div>
 
+    <!-- LOGIN PAGE -->
     <div id="loginPage" class="hidden">
-        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
+        <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
         <div class="logo">GRAY PAY</div>
         <h2>Welcome Back!</h2>
         <div style="color:#9ca3af; margin-bottom:20px;">Log in to your account to continue</div>
@@ -178,6 +138,7 @@
         <div class="text-center mt-20">Don't have an account? <span style="color:#10b981; cursor:pointer;" onclick="showSignupPage()">Create one</span></div>
     </div>
 
+    <!-- DASHBOARD -->
     <div id="dashboardPage" class="hidden">
         <div class="header"><div></div><div style="display:flex; gap:15px;"><span style="cursor:pointer; font-size:20px;" onclick="showTransactionHistory()">🔔</span><button class="help-btn" onclick="showHelp()">❓</button></div></div>
         <div class="balance-card">
@@ -193,13 +154,7 @@
             <div onclick="openWhatsApp()"><div class="service-icon">🛡️</div><div class="service-label">Support</div></div>
             <div onclick="openWhatsApp()"><div class="service-icon">👥</div><div class="service-label">Group</div></div>
             <div onclick="startMining()"><div class="service-icon">⛏️</div><div class="service-label">Earn</div></div>
-            <div id="profileIconDiv" class="profile-icon-wrapper" onclick="showProfile()">
-                <div style="position: relative; display: inline-block;">
-                    <div class="service-icon">👤</div>
-                    <span id="profileNotificationBadge" class="profile-badge" style="display: none;">1</span>
-                </div>
-                <div class="service-label">Profile</div>
-            </div>
+            <div onclick="showProfile()"><div class="service-icon">👤</div><div class="service-label">Profile</div></div>
         </div>
         <div class="services-grid">
             <div onclick="showBuyPBC()"><div class="service-icon">💳</div><div class="service-label">Buy PBC</div></div>
@@ -210,24 +165,21 @@
         <div class="bottom-tabs"><div class="tab" onclick="alert('Wallet tab')">Wallet</div><div class="tab" onclick="alert('Social tab')">Social</div><div class="tab" onclick="alert('Data tab')">Data</div><div class="tab" onclick="alert('Profile tab')">Profile</div></div>
     </div>
 
+    <!-- DYNAMIC CONTENT -->
     <div id="dynamicContent"></div>
 </div>
 
 <div id="helpModal" class="modal"><div class="modal-content"><h3>Contact Support</h3><button class="btn" onclick="window.open('https://wa.me/2348168909003','_blank')">💬 WhatsApp</button><button class="btn" style="margin-top: 12px;" onclick="location.href='mailto:graypay423492@gmail.com'">📧 Email</button><button class="btn" style="margin-top: 12px;" onclick="closeHelp()">Close</button></div></div>
 <div id="loadingOverlay" class="loading"><div>⏳</div><div id="loadingMsg">Processing...</div></div>
 
-<script type="module">
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    
-    const auth = getAuth();
-    
+<script>
     let currentUser = null;
     let users = [];
     let miningTimer = null;
 
-    function loadUsers() { let s = localStorage.getItem('graypay_users'); if(s) users = JSON.parse(s); else users = []; }
+    function loadUsers() { let s = localStorage.getItem('graypay_users'); if(s) users = JSON.parse(s); }
     function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
-    window.openWhatsApp = function() { window.open('https://wa.me/2348168909003','_blank'); }
+    function openWhatsApp() { window.open('https://wa.me/2348168909003','_blank'); }
 
     function showPage(id) {
         document.getElementById('welcomePage').classList.add('hidden');
@@ -238,9 +190,9 @@
         if(el) el.classList.remove('hidden');
         if(id === 'dashboardPage' && currentUser) updateDashboard();
     }
-    window.showWelcomePage = function() { showPage('welcomePage'); }
-    window.showSignupPage = function() { showPage('signupPage'); }
-    window.showLoginPage = function() { showPage('loginPage'); }
+    function showWelcomePage() { showPage('welcomePage'); }
+    function showSignupPage() { showPage('signupPage'); }
+    function showLoginPage() { showPage('loginPage'); }
 
     function updateDashboard() {
         if(currentUser) {
@@ -252,12 +204,9 @@
         }
     }
 
-    function showDashboardPage() { 
-        updateDashboard(); 
-        showPage('dashboardPage');
-        checkProfileNotification();
-    }
+    function showDashboardPage() { updateDashboard(); showPage('dashboardPage'); }
 
+    // ========== SPLASH LOADING SCREEN (ADDED - DO NOT REMOVE) ==========
     function showSplashLoading(callback) {
         let splashDiv = document.createElement('div');
         splashDiv.className = 'splash-loading';
@@ -267,202 +216,71 @@
             <div class="loading-text">Loading your dashboard...</div>
         `;
         document.body.appendChild(splashDiv);
+        
         setTimeout(() => {
             splashDiv.remove();
             if(callback) callback();
         }, 4500);
     }
 
-    window.signup = async function() {
+    // ========== SIGNUP ==========
+    function signup() {
         let fn = document.getElementById('signupFirstname').value.trim();
         let sn = document.getElementById('signupSurname').value.trim();
         let em = document.getElementById('signupEmail').value.trim();
         let pw = document.getElementById('signupPassword').value;
         let cf = document.getElementById('signupConfirm').value;
-        
         if(!fn || !sn || !em || !pw) { document.getElementById('signupError').innerText = 'All fields required'; return; }
         if(pw.length < 8) { document.getElementById('signupError').innerText = 'Password must be 8+ characters'; return; }
         if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
-        
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, em, pw);
-            const firebaseUser = userCredential.user;
-            await sendEmailVerification(firebaseUser);
-            
-            for(let u of users) if(u.email === em) { 
-                document.getElementById('signupError').innerText = 'Email exists'; 
-                return; 
-            }
-            
-            let newUser = { 
-                id: Date.now(), 
-                firebaseUid: firebaseUser.uid,
-                firstname: fn, 
-                surname: sn, 
-                email: em, 
-                password: pw, 
-                balance: 200000, 
-                miningActive: false, 
-                miningEnd: null, 
-                emailVerified: false,
-                transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] 
-            };
-            users.push(newUser); 
-            saveUsers(); 
-            currentUser = newUser; 
-            localStorage.setItem('graypay_current', em);
-            
-            showSplashLoading(() => {
-                showDashboardPage();
-                showWelcomePopup();
-                alert("📧 Verification email sent to " + em + "!\n\nPlease check your inbox and click the verification link to verify your email address before logging in.");
-            });
-        } catch (error) {
-            console.error(error);
-            if(error.code === 'auth/email-already-in-use') {
-                document.getElementById('signupError').innerText = 'Email already registered';
-            } else {
-                document.getElementById('signupError').innerText = error.message;
-            }
-        }
+        for(let u of users) if(u.email === em) { document.getElementById('signupError').innerText = 'Email exists'; return; }
+        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 200000, miningActive: false, miningEnd: null, transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 200000, note: 'Welcome bonus' } }] };
+        users.push(newUser); saveUsers(); currentUser = newUser; localStorage.setItem('graypay_current', em);
+        showSplashLoading(() => {
+            showDashboardPage();
+            showWelcomePopup();
+        });
     }
 
-    window.login = async function() {
+    // ========== LOGIN ==========
+    function login() {
+        loadUsers();
         let em = document.getElementById('loginEmail').value.trim();
         let pw = document.getElementById('loginPassword').value;
-        
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, em, pw);
-            const firebaseUser = userCredential.user;
-            
-            if(!firebaseUser.emailVerified) {
-                document.getElementById('loginError').innerText = 'Please verify your email first. Check your inbox for verification link.';
-                return;
-            }
-            
-            loadUsers();
-            let localUser = users.find(u => u.email === em);
-            
-            if(localUser) {
-                currentUser = localUser;
-                currentUser.emailVerified = firebaseUser.emailVerified;
-            } else {
-                currentUser = { 
-                    id: Date.now(), 
-                    firebaseUid: firebaseUser.uid,
-                    firstname: em.split('@')[0], 
-                    surname: '', 
-                    email: em, 
-                    balance: 200000, 
-                    miningActive: false, 
-                    miningEnd: null, 
-                    emailVerified: firebaseUser.emailVerified,
-                    transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: em.split('@')[0], amount: 200000, note: 'Welcome bonus' } }] 
-                };
-                users.push(currentUser);
-                saveUsers();
-            }
-            
-            localStorage.setItem('graypay_current', em);
+        for(let u of users) if(u.email === em && u.password === pw) { 
+            currentUser = u; 
+            localStorage.setItem('graypay_current', em); 
             showSplashLoading(() => {
                 showDashboardPage();
             });
-        } catch (error) {
-            console.error(error);
-            document.getElementById('loginError').innerText = 'Invalid email or password';
+            return; 
         }
+        document.getElementById('loginError').innerText = 'Invalid email or password';
     }
 
-    async function checkFirebaseEmailVerification() {
-        const firebaseUser = auth.currentUser;
-        if(firebaseUser && currentUser) {
-            await firebaseUser.reload();
-            if(firebaseUser.emailVerified) {
-                currentUser.emailVerified = true;
-                let localUser = users.find(u => u.email === currentUser.email);
-                if(localUser) {
-                    localUser.emailVerified = true;
-                    saveUsers();
-                }
-            }
-            return firebaseUser.emailVerified;
-        }
-        return currentUser ? (currentUser.emailVerified || false) : false;
+    // ========== FIXED AUTO LOGIN ==========
+    function autoLogin() { 
+        loadUsers(); 
+        let saved = localStorage.getItem('graypay_current'); 
+        if(saved) { 
+            for(let u of users) { 
+                if(u.email === saved) { 
+                    currentUser = u; 
+                    showDashboardPage(); 
+                    return; 
+                } 
+            } 
+        } 
+        showWelcomePage(); 
     }
 
-    window.sendVerificationEmail = async function() {
-        const firebaseUser = auth.currentUser;
-        if(firebaseUser && !firebaseUser.emailVerified) {
-            try {
-                await sendEmailVerification(firebaseUser);
-                alert("📧 Verification email sent to " + currentUser.email + "!\n\nPlease check your inbox and click the verification link.");
-            } catch (error) {
-                alert("Error sending verification email: " + error.message);
-            }
-        } else {
-            alert("Your email is already verified!");
-            if(currentUser) {
-                currentUser.emailVerified = true;
-                let localUser = users.find(u => u.email === currentUser.email);
-                if(localUser) localUser.emailVerified = true;
-                saveUsers();
-            }
-        }
-        
-        if(document.getElementById('historyView')) {
-            showTransactionHistory();
-        }
-        if(document.getElementById('profileView')) {
-            showProfile();
-        }
-    }
-
-    function isEmailVerified() {
-        if(currentUser && currentUser.emailVerified) return true;
-        return false;
-    }
-
-    function showProfileNotification() {
-        let badge = document.getElementById('profileNotificationBadge');
-        if(badge) {
-            badge.style.display = 'inline-block';
-        }
-    }
-    
-    function hideProfileNotification() {
-        let badge = document.getElementById('profileNotificationBadge');
-        if(badge) {
-            badge.style.display = 'none';
-        }
-        localStorage.setItem('profile_notification_seen', 'true');
-    }
-    
-    function checkProfileNotification() {
-        let seen = localStorage.getItem('profile_notification_seen');
-        if(!seen && currentUser) {
-            showProfileNotification();
-        }
-    }
-
-    window.showProfile = async function() {
+    // ========== PROFILE ==========
+    function showProfile() {
         if(!currentUser) return;
-        hideProfileNotification();
-        
-        let isVerified = await checkFirebaseEmailVerification();
-        
-        let verificationMessage = '';
-        if(!isVerified) {
-            verificationMessage = `<div class="warning-box" style="background:#1f1f1f; border-left-color:#fbbf24; margin-bottom: 15px;">📧 <strong>Email Verification Required!</strong><br>Your email (${currentUser.email}) has not been verified yet.<br><br><button class="btn" style="background:#fbbf24; color:#000; margin-top: 10px;" onclick="sendVerificationEmail()">📧 Send Verification Email</button></div>`;
-        } else {
-            verificationMessage = `<div class="info-box" style="background:#064e3b; border-left-color:#10b981;">✅ <strong>Email Verified!</strong><br>Your email (${currentUser.email}) has been verified.</div>`;
-        }
-        
-        document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div>${verificationMessage}<button class="btn" onclick="logout()">Log Out</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div><button class="btn" onclick="logout()">Log Out</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('profileView').style.display = 'block'; document.getElementById('profileView').style.padding = '20px';
     }
-    
-    window.logout = async function() { 
-        await signOut(auth);
+    function logout() { 
         showSplashLoading(() => {
             currentUser = null; 
             localStorage.removeItem('graypay_current'); 
@@ -470,11 +288,10 @@
             showWelcomePage();
         });
     }
-    
     function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
 
-    // ========== SUCCESS POPUP FUNCTIONS ==========
-    window.showSuccessPopup = function(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
+    // ========== SUCCESS POPUP ==========
+    function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
@@ -510,7 +327,7 @@
         };
     }
 
-    window.showAirtimeSuccessPopup = function(amount, phone, transactionId, onViewReceipt) {
+    function showAirtimeSuccessPopup(amount, phone, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
@@ -545,7 +362,7 @@
         };
     }
 
-    window.showDataSuccessPopup = function(amount, phone, plan, transactionId, onViewReceipt) {
+    function showDataSuccessPopup(amount, phone, plan, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
                 <div style="background: #1f1f1f; border-radius: 20px; padding: 25px; width: 85%; max-width: 380px; text-align: center;">
@@ -582,7 +399,7 @@
     }
 
     // ========== WITHDRAW ==========
-    window.showWithdrawPage = function() {
+    function showWithdrawPage() {
         if(!currentUser) return;
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
         let opts = banks.map(b => `<option>${b}</option>`).join('');
@@ -590,7 +407,7 @@
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('withdrawView').style.display = 'block'; document.getElementById('withdrawView').style.padding = '20px';
     }
     
-    window.processWithdraw = function() {
+    function processWithdraw() {
         let amt = parseInt(document.getElementById('withdrawAmount').value);
         let code = document.getElementById('pbcCode').value;
         let accName = document.getElementById('accName').value;
@@ -628,6 +445,7 @@
             currentUser.transactions.unshift(transaction); 
             saveUsers(); 
             
+            // Show success popup
             showSuccessPopup(
                 'Withdrawal Successful!',
                 'You have successfully withdrawn',
@@ -642,13 +460,13 @@
     }
 
     // ========== BUY AIRTIME ==========
-    window.showBuyAirtime = function() {
+    function showBuyAirtime() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
     }
     
-    window.processAirtime = function() {
+    function processAirtime() {
         let code = document.getElementById('airCode').value;
         let amt = parseInt(document.getElementById('airAmount').value);
         let phone = document.getElementById('airPhone').value;
@@ -686,13 +504,13 @@
     }
 
     // ========== BUY DATA ==========
-    window.showBuyData = function() {
+    function showBuyData() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('dataView').style.display = 'block'; document.getElementById('dataView').style.padding = '20px';
     }
     
-    window.processData = function() {
+    function processData() {
         let code = document.getElementById('dataCode').value;
         let phone = document.getElementById('dataPhone').value;
         let plan = document.getElementById('dataPlan');
@@ -732,8 +550,8 @@
         });
     }
 
-    // ========== BUY PBC ==========
-    window.showBuyPBC = function() {
+    // ========== BUY PBC FULL FLOW ==========
+    function showBuyPBC() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('pbcView').style.display = 'block'; document.getElementById('pbcView').style.padding = '20px';
@@ -743,20 +561,20 @@
         function check() { if(nameInp.value && emailInp.value) { btn.disabled = false; btn.className = 'btn btn-blue'; } else { btn.disabled = true; btn.className = 'btn btn-gray'; } }
         nameInp.addEventListener('input', check); emailInp.addEventListener('input', check);
     }
-    window.pbcStep1 = function() { showLoading('Processing...', 10000, () => showPalmPayWarning()); }
+    function pbcStep1() { showLoading('Processing...', 10000, () => showPalmPayWarning()); }
     function showPalmPayWarning() {
         document.getElementById('dynamicContent').innerHTML = `<div id="warningView"><div class="header"><button class="back-btn" onclick="goBackToPBC()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>PalmPay Service Down</h2><p>Please do not use PalmPay for payments at this time. Use other supported banks.</p></div><button class="btn" onclick="pbcStep2()">Proceed to Bank Transfer</button><button class="btn" style="margin-top: 12px;" onclick="pbcStep2()">I Understand</button></div>`;
         document.getElementById('warningView').style.display = 'block'; document.getElementById('warningView').style.padding = '20px';
     }
     function goBackToPBC() { showBuyPBC(); }
-    window.pbcStep2 = function() { showLoading('Processing...', 5000, () => showBankDetails()); }
-    window.copyText = function(txt, el) { navigator.clipboard.writeText(txt); let orig = el.innerHTML; el.innerHTML = txt + ' ✅ Copied!'; setTimeout(() => el.innerHTML = orig, 2000); }
+    function pbcStep2() { showLoading('Processing...', 5000, () => showBankDetails()); }
+    function copyText(txt, el) { navigator.clipboard.writeText(txt); let orig = el.innerHTML; el.innerHTML = txt + ' ✅ Copied!'; setTimeout(() => el.innerHTML = orig, 2000); }
     function showBankDetails() {
         document.getElementById('dynamicContent').innerHTML = `<div id="bankView"><div class="header"><button class="back-btn" onclick="goBackToWarning()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Bank Transfer</h2><div class="copy-item" onclick="copyText('7000', this.querySelector('.copy-text'))"><span class="copy-text"><strong>Amount:</strong> NGN 7,000</span><span class="copy-icon">📋 Copy</span></div><div class="copy-item" onclick="copyText('2778715377', this.querySelector('.copy-text'))"><span class="copy-text"><strong>Account Number:</strong> 2778715377</span><span class="copy-icon">📋 Copy</span></div><div class="info-box"><strong>Bank Name:</strong> Paga</div><div class="info-box"><strong>Account Name:</strong> Ahmed Isah</div><p class="text-center mb-10">Transfer exact amount. Use your name as description.</p><button class="btn" onclick="pbcStep3()">I have made this bank transfer</button></div>`;
         document.getElementById('bankView').style.display = 'block'; document.getElementById('bankView').style.padding = '20px';
     }
     function goBackToWarning() { showPalmPayWarning(); }
-    window.pbcStep3 = function() { showLoading('Verifying payment...', 20000, () => showFailed()); }
+    function pbcStep3() { showLoading('Verifying payment...', 20000, () => showFailed()); }
     function showFailed() {
         document.getElementById('dynamicContent').innerHTML = `<div id="failedView"><div class="header"><button class="back-btn" onclick="goBackToBank()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>Transaction verification failed!</h2><p>No Payment received from you / invalid payment method.</p></div><button class="btn" onclick="goBackToBank()">Try Again</button><button class="btn" style="margin-top: 12px;" onclick="showHelp()">❓ You Need Help?</button></div>`;
         document.getElementById('failedView').style.display = 'block'; document.getElementById('failedView').style.padding = '20px';
@@ -764,7 +582,7 @@
     function goBackToBank() { showBankDetails(); }
 
     // ========== MINING ==========
-    window.startMining = function() {
+    function startMining() {
         if(!currentUser) return;
         if(currentUser.miningActive) { alert('Mining already active!'); return; }
         currentUser.miningActive = true;
@@ -780,13 +598,13 @@
         }, 3600000);
     }
 
-    // ========== TRANSACTION HISTORY ==========
-    window.showTransactionHistory = async function() {
+    // ========== TRANSACTION HISTORY (Grouped by Date) ==========
+    function showTransactionHistory() {
         if(!currentUser) return;
         
-        let isVerified = await checkFirebaseEmailVerification();
-        
         let transactions = [...currentUser.transactions];
+        
+        // Group by date
         let groups = {};
         transactions.forEach(t => {
             let dateKey;
@@ -843,19 +661,6 @@
             historyHtml += `</div>`;
         }
         
-        let verificationWarning = '';
-        if(!isVerified) {
-            verificationWarning = `
-                <div class="warning-box" style="background:#1f1f1f; border-left-color:#fbbf24; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>📧 Verify Your Email</strong><br>
-                        <small style="color:#9ca3af;">Verify your email to secure your account</small>
-                    </div>
-                    <button class="btn" style="background:#fbbf24; color:#000; padding: 8px 16px; font-size: 12px;" onclick="sendVerificationEmail()">Verify</button>
-                </div>
-            `;
-        }
-        
         document.getElementById('dynamicContent').innerHTML = `
             <div id="historyView">
                 <div class="header">
@@ -863,7 +668,6 @@
                     <button class="help-btn" onclick="showHelp()">❓</button>
                 </div>
                 <h2>Transaction history</h2>
-                ${verificationWarning}
                 ${historyHtml || '<div class="text-center" style="color:#9ca3af; padding: 40px;">No transactions yet</div>'}
             </div>
         `;
@@ -873,7 +677,8 @@
         document.getElementById('historyView').style.padding = '20px';
     }
     
-    window.showTransactionDetails = function(transactionId) {
+    // ========== TRANSACTION DETAILS PAGE ==========
+    function showTransactionDetails(transactionId) {
         if(!currentUser) return;
         
         let transaction = currentUser.transactions.find(t => t.id == transactionId);
@@ -975,7 +780,7 @@
         showTransactionHistory();
     }
     
-    window.shareReceipt = function(transactionId) {
+    function shareReceipt(transactionId) {
         let transaction = currentUser.transactions.find(t => t.id == transactionId);
         if(transaction) {
             let details = transaction.fullDetails || {};
@@ -987,7 +792,7 @@
         }
     }
     
-    window.repeatTransaction = function(type) {
+    function repeatTransaction(type) {
         closeDynamic();
         if(type === 'Withdrawal') {
             showWithdrawPage();
@@ -1001,10 +806,11 @@
     }
 
     // ========== HELP & LOADING ==========
-    window.showHelp = function() { document.getElementById('helpModal').style.display = 'flex'; }
-    window.closeHelp = function() { document.getElementById('helpModal').style.display = 'none'; }
+    function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
+    function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
     function showLoading(msg, ms, cb) { let loader = document.getElementById('loadingOverlay'); document.getElementById('loadingMsg').innerText = msg; loader.style.display = 'flex'; setTimeout(() => { loader.style.display = 'none'; if(cb) cb(); }, ms); }
 
+    // ========== WELCOME POPUP ==========
     function showWelcomePopup() {
         let popupHtml = `
             <div id="welcomePopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
@@ -1021,49 +827,15 @@
         document.body.insertAdjacentHTML('beforeend', popupHtml);
     }
 
-    window.closeWelcomePopup = function() {
+    function closeWelcomePopup() {
         let popup = document.getElementById('welcomePopup');
         if(popup) popup.remove();
     }
 
-    onAuthStateChanged(auth, async (firebaseUser) => {
+    // ========== FIX: Ensure users load before auto-login ==========
+    document.addEventListener('DOMContentLoaded', function() {
         loadUsers();
-        if(firebaseUser) {
-            if(!firebaseUser.emailVerified) {
-                showWelcomePage();
-                return;
-            }
-            
-            let localUser = users.find(u => u.email === firebaseUser.email);
-            if(localUser) {
-                currentUser = localUser;
-                currentUser.emailVerified = firebaseUser.emailVerified;
-                showDashboardPage();
-            } else {
-                currentUser = { 
-                    id: Date.now(), 
-                    firebaseUid: firebaseUser.uid,
-                    firstname: firebaseUser.email.split('@')[0], 
-                    surname: '', 
-                    email: firebaseUser.email, 
-                    balance: 200000, 
-                    miningActive: false, 
-                    miningEnd: null, 
-                    emailVerified: firebaseUser.emailVerified,
-                    transactions: [{ type: 'Bonus', amount: 200000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: firebaseUser.email.split('@')[0], amount: 200000, note: 'Welcome bonus' } }] 
-                };
-                users.push(currentUser);
-                saveUsers();
-                showDashboardPage();
-            }
-        } else {
-            let saved = localStorage.getItem('graypay_current');
-            if(saved && users.find(u => u.email === saved)) {
-                showWelcomePage();
-            } else {
-                showWelcomePage();
-            }
-        }
+        autoLogin();
     });
 </script>
 </body>
