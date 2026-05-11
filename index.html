@@ -415,6 +415,33 @@
         }
     }
 
+    // ONE-TIME RECOVERY FOR MISSED PAST REWARDS
+    function recoverMissedMiningRewards() {
+        if(!currentUser) return false;
+        if(!currentUser.miningActive) return false;
+        
+        let recoveryKey = 'mining_recovered_' + currentUser.id;
+        if(localStorage.getItem(recoveryKey)) return false;
+        
+        let startTime = currentUser.miningStart;
+        let now = Date.now();
+        let elapsedHours = (now - startTime) / (60 * 60 * 1000);
+        let totalEarned = Math.min(200000, Math.floor(elapsedHours * (200000 / 24)));
+        let alreadyClaimed = currentUser.miningClaimed || 0;
+        let pending = totalEarned - alreadyClaimed;
+        
+        if(pending > 0) {
+            currentUser.balance += pending;
+            currentUser.miningClaimed = totalEarned;
+            saveUsers();
+            localStorage.setItem(recoveryKey, 'true');
+            showMiningNotification(pending, pending / (200000 / 24));
+            updateDashboard();
+            return true;
+        }
+        return false;
+    }
+
     function showSplashLoading(callback) {
         let splashDiv = document.createElement('div');
         splashDiv.className = 'splash-loading';
@@ -481,6 +508,8 @@
             localStorage.setItem('graypay_current', em); 
             showSplashLoading(() => {
                 showDashboardPage();
+                // Run recovery for missed past rewards
+                recoverMissedMiningRewards();
             });
             return; 
         }
@@ -497,6 +526,8 @@
                     // Check for missed mining rewards on page load
                     if(currentUser.miningActive) {
                         checkAndClaimMiningRewards();
+                        // Also run recovery for any missed past rewards
+                        recoverMissedMiningRewards();
                     }
                     showDashboardPage(); 
                     return; 
