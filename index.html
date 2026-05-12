@@ -3,15 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Gray Pay - Complete</title>
+    <title>Gpay - Complete</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
         .app { max-width: 450px; margin: 0 auto; background: #0a0a0a; min-height: 100vh; padding: 20px; padding-bottom: 80px; position: relative; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        /* New header style - Gpay logo on left, icons on right */
+        .header-new {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 5px;
+        }
+        .gpay-logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 0.5px;
+        }
+        .header-icons {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+        .bell-icon {
+            font-size: 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: white;
+        }
+        .help-icon {
+            font-size: 14px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #10b981;
+        }
+        
+        /* Hide old header */
+        .old-header { display: none; }
+        
         .back-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-        .help-btn { background: none; border: none; color: #10b981; font-size: 14px; cursor: pointer; }
-        .logo { font-size: 32px; font-weight: bold; text-align: center; color: #10b981; margin-bottom: 20px; }
         .balance-card { background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
         .greeting { font-size: 18px; margin-bottom: 15px; }
         .balance-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -164,7 +202,7 @@
             70% { opacity: 1; }
             100% { opacity: 0; transform: translateY(-20px); display: none; }
         }
-        /* Change 1: Center Get Started button - keep original size */
+        /* Center Get Started button */
         .welcome-container {
             display: flex;
             flex-direction: column;
@@ -181,7 +219,7 @@
             width: auto;
             min-width: 160px;
         }
-        /* Change 3: Redesigned email verification card */
+        /* Redesigned email verification card */
         .verify-card {
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             border-radius: 16px;
@@ -219,13 +257,29 @@
             color: #10b981;
             font-size: 14px;
         }
+        /* Logo style for other pages */
+        .logo-center {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
     <div id="welcomePage">
-        <div class="header"><div></div><button class="help-btn" onclick="showHelp()">❓ You Need Help?</button></div>
-        <div class="logo">GRAY PAY</div>
+        <div class="header-new">
+            <div class="gpay-logo">Gpay</div>
+            <div class="header-icons">
+                <span class="bell-icon" style="opacity:0.5;">🔔</span>
+                <button class="help-icon" onclick="showHelp()">❓</button>
+            </div>
+        </div>
         <div class="welcome-container">
             <div class="text-center" style="color:#9ca3af; margin-bottom:30px;">Welcome!</div>
             <div class="text-center" style="color:#9ca3af; margin-bottom:30px;">Create your account and get welcome bonus. Start mining every hour and withdraw your earnings anytime.</div>
@@ -237,7 +291,7 @@
 
     <div id="signupPage" class="hidden">
         <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
-        <div class="logo">GRAY PAY</div>
+        <div class="logo-center">Gpay</div>
         <input type="text" id="signupFirstname" class="input-field" placeholder="First Name">
         <input type="text" id="signupSurname" class="input-field" placeholder="Surname">
         <input type="email" id="signupEmail" class="input-field" placeholder="Email Address">
@@ -250,7 +304,7 @@
 
     <div id="loginPage" class="hidden">
         <div class="header"><button class="back-btn" onclick="showWelcomePage()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div>
-        <div class="logo">GRAY PAY</div>
+        <div class="logo-center">Gpay</div>
         <h2>Welcome Back!</h2>
         <div style="color:#9ca3af; margin-bottom:20px;">Log in to your account to continue</div>
         <input type="email" id="loginEmail" class="input-field" placeholder="Your Email">
@@ -261,8 +315,15 @@
     </div>
 
     <div id="dashboardPage" class="hidden">
-        <div class="header"><div></div><div style="display:flex; gap:15px;"><span style="cursor:pointer; font-size:20px;" onclick="showTransactionHistory()">🔔</span><button class="help-btn" onclick="showHelp()">❓</button></div></div>
-        <div class="logo">GRAY PAY</div>
+        <!-- New header: Gpay left, Bell + Help right -->
+        <div class="header-new">
+            <div class="gpay-logo">Gpay</div>
+            <div class="header-icons">
+                <span class="bell-icon" onclick="showTransactionHistory()">🔔</span>
+                <button class="help-icon" onclick="showHelp()">❓</button>
+            </div>
+        </div>
+        
         <div class="balance-card">
             <div class="greeting">Hi, <span id="userName">User</span></div>
             <div class="balance-row"><span>Available Balance</span><button class="withdraw-small" onclick="showWithdrawPage()">Withdraw</button></div>
@@ -308,7 +369,7 @@
     function saveUsers() { localStorage.setItem('graypay_users', JSON.stringify(users)); }
     function openWhatsApp() { window.open('https://wa.me/2348168909003','_blank'); }
 
-    // Change 2: 3-second loading spinner for Get Started (matches signin/logout behavior)
+    // 3-second loading spinner for Get Started
     function handleGetStarted() {
         showSplashLoadingForAuth(() => {
             showSignupPage();
@@ -320,7 +381,7 @@
         splashDiv.className = 'splash-loading';
         splashDiv.innerHTML = `
             <div class="spinner"></div>
-            <div class="logo-text">GRAY PAY</div>
+            <div class="logo-text">Gpay</div>
             <div class="loading-text">Loading...</div>
         `;
         document.body.appendChild(splashDiv);
@@ -343,14 +404,13 @@
     function showSignupPage() { showPage('signupPage'); }
     function showLoginPage() { showPage('loginPage'); }
 
-    // ========== FIXED MINING FUNCTIONS ==========
+    // Mining Functions
     function checkAndClaimMiningRewards() {
         if(!currentUser || !currentUser.miningActive) return false;
         
         let now = Date.now();
         let claimed = false;
         
-        // Check if 24 hours mining period is complete
         if(now >= currentUser.miningEnd) {
             let remaining = 20000 - (currentUser.miningClaimed || 0);
             if(remaining > 0) {
@@ -364,7 +424,6 @@
             return true;
         }
         
-        // Calculate based on time elapsed since mining STARTED
         let miningStart = currentUser.miningStart;
         let elapsedMs = now - miningStart;
         let elapsedHours = elapsedMs / (60 * 60 * 1000);
@@ -377,7 +436,6 @@
         if(reward > 0) {
             currentUser.balance += reward;
             currentUser.miningClaimed = alreadyClaimed + reward;
-            // Update lastClaimTime to fix NaN issue
             currentUser.lastClaimTime = now;
             saveUsers();
             showMiningNotification(reward, reward / (20000 / 24));
@@ -389,11 +447,10 @@
     }
     
     function showMiningNotification(amount, hours) {
-        // Only show popup if dashboard page is visible
         let dashboardPage = document.getElementById('dashboardPage');
         let isOnDashboard = dashboardPage && !dashboardPage.classList.contains('hidden');
         
-        if(!isOnDashboard) return; // Don't show popup on transaction history or other pages
+        if(!isOnDashboard) return;
         
         let notif = document.createElement('div');
         notif.className = 'mining-notification';
@@ -410,13 +467,11 @@
     function startMining() {
         if(!currentUser) return;
         if(currentUser.miningActive) { 
-            // Check for pending rewards when clicked
             let claimed = checkAndClaimMiningRewards();
             updateDashboard();
             if(claimed) {
                 alert('⛏️ Mining rewards have been added to your balance!');
             } else {
-                // Calculate time until next reward
                 let lastClaim = currentUser.lastClaimTime || currentUser.miningStart;
                 let nextRewardTime = lastClaim + (60 * 60 * 1000);
                 let remainingMs = nextRewardTime - Date.now();
@@ -451,7 +506,6 @@
             if(percent > 100) percent = 100;
             document.getElementById('progressFill').style.width = percent + '%';
             
-            // Show mining status if active
             let existingStatus = document.getElementById('miningStatusBox');
             if(currentUser.miningActive) {
                 let remainingMs = currentUser.miningEnd - Date.now();
@@ -459,7 +513,6 @@
                 let remainingMinutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
                 let remainingSeconds = Math.floor((remainingMs % (60 * 1000)) / 1000);
                 
-                // Fix for NaN - use lastClaimTime or miningStart
                 let lastClaim = currentUser.lastClaimTime || currentUser.miningStart;
                 let nextRewardMs = (lastClaim + (60 * 60 * 1000)) - Date.now();
                 let nextRewardMinutes = Math.floor(nextRewardMs / (60 * 1000));
@@ -476,7 +529,6 @@
                 
                 let claimed = currentUser.miningClaimed || 0;
                 
-                // Create scrolling message
                 let message = ' ⛏️ MINING ACTIVE! ' + remainingHours + 'h ' + remainingMinutes + 'm ' + remainingSeconds + 's remaining | Next reward: ' + nextRewardMinutes + 'm ' + nextRewardSeconds + 's | Claimed: ₦' + claimed.toLocaleString() + ' / ₦20,000 🚀 ••• ';
                 let fullMessage = message + message;
                 
@@ -507,7 +559,6 @@
         } else if(badge) {
             badge.style.display = 'none';
         }
-        // Update scrolling text every 1 second
         if(currentUser && currentUser.miningActive) {
             if(window.scrollInterval) clearInterval(window.scrollInterval);
             window.scrollInterval = setInterval(function() {
@@ -520,7 +571,6 @@
         }
     }
 
-    // FORCE RECOVERY FOR ALL MISSED PAST REWARDS
     function forceRecoverAllMissedRewards() {
         if(!currentUser) return false;
         if(!currentUser.miningActive) return false;
@@ -549,7 +599,7 @@
         splashDiv.className = 'splash-loading';
         splashDiv.innerHTML = `
             <div class="spinner"></div>
-            <div class="logo-text">GRAY PAY</div>
+            <div class="logo-text">Gpay</div>
             <div class="loading-text">Loading your dashboard...</div>
         `;
         document.body.appendChild(splashDiv);
@@ -559,13 +609,12 @@
         }, 4500);
     }
 
-    // NEW: Full splash loading for withdraw and PBC
     function showFullSplashLoading(message, callback, duration = 3000) {
         let splashDiv = document.createElement('div');
         splashDiv.className = 'splash-loading';
         splashDiv.innerHTML = `
             <div class="spinner"></div>
-            <div class="logo-text">GRAY PAY</div>
+            <div class="logo-text">Gpay</div>
             <div class="loading-text">${message}</div>
         `;
         document.body.appendChild(splashDiv);
@@ -575,7 +624,6 @@
         }, duration);
     }
 
-    // ========== SIGNUP ==========
     function signup() {
         let fn = document.getElementById('signupFirstname').value.trim();
         let sn = document.getElementById('signupSurname').value.trim();
@@ -586,7 +634,7 @@
         if(pw.length < 8) { document.getElementById('signupError').innerText = 'Password must be 8+ characters'; return; }
         if(pw !== cf) { document.getElementById('signupError').innerText = 'Passwords do not match'; return; }
         for(let u of users) if(u.email === em) { document.getElementById('signupError').innerText = 'Email exists'; return; }
-        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 10000, miningActive: false, miningEnd: null, miningStart: null, lastClaimTime: null, miningClaimed: 0, transactions: [{ type: 'Bonus', amount: 10000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gray Pay', recipient: fn + ' ' + sn, amount: 10000, note: 'Welcome bonus' } }] };
+        let newUser = { id: Date.now(), firstname: fn, surname: sn, email: em, password: pw, balance: 10000, miningActive: false, miningEnd: null, miningStart: null, lastClaimTime: null, miningClaimed: 0, transactions: [{ type: 'Bonus', amount: 10000, date: new Date().toLocaleString(), status: 'Success', fullDetails: { transactionType: 'Bonus', sender: 'Gpay', recipient: fn + ' ' + sn, amount: 10000, note: 'Welcome bonus' } }] };
         users.push(newUser); saveUsers(); currentUser = newUser; localStorage.setItem('graypay_current', em);
         
         if(window.sendVerificationEmailInBackground) {
@@ -599,7 +647,6 @@
         });
     }
 
-    // ========== LOGIN ==========
     function login() {
         loadUsers();
         let em = document.getElementById('loginEmail').value.trim();
@@ -609,7 +656,6 @@
             localStorage.setItem('graypay_current', em); 
             showSplashLoading(() => {
                 showDashboardPage();
-                // FORCE RECOVER ALL MISSED REWARDS
                 forceRecoverAllMissedRewards();
             });
             return; 
@@ -636,7 +682,7 @@
         showWelcomePage(); 
     }
 
-    // ========== PROFILE with REDESIGNED EMAIL VERIFICATION (Change 3) ==========
+    // Redesigned email verification with auto-update
     function showProfile() {
         if(!currentUser) return;
         let badge = document.getElementById('profileBadge');
@@ -651,7 +697,7 @@
             } else {
                 verificationHtml = `<div class="verify-card"><div class="verify-title"><span>⚠️</span> Email Verification Required</div><div class="verify-message">Verify your email to secure your account and unlock all features.</div><button class="verify-btn" onclick="sendVerificationEmailFirebase(); setTimeout(() => renderProfileContent(), 500);">📧 Send Verification Email</button></div>`;
             }
-            document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo">Profile</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div>${verificationHtml}<button class="btn" onclick="logout()">Log Out</button></div>`;
+            document.getElementById('dynamicContent').innerHTML = `<div id="profileView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="logo-center">Gpay</div><div class="info-box">Full Name: ${currentUser.firstname} ${currentUser.surname}</div><div class="info-box">Email: ${currentUser.email}</div><div class="info-box">Password: ********</div>${verificationHtml}<button class="btn" onclick="logout()">Log Out</button></div>`;
             showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('profileView').style.display = 'block'; document.getElementById('profileView').style.padding = '20px';
         }
         renderProfileContent();
@@ -668,7 +714,7 @@
     }
     function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
 
-    // ========== SUCCESS POPUPS ==========
+    // Success Popups
     function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000;">
@@ -776,7 +822,7 @@
         };
     }
 
-    // ========== WITHDRAW ==========
+    // Withdraw, Airtime, Data, PBC functions (unchanged)
     function showWithdrawPage() {
         if(!currentUser) return;
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
@@ -817,7 +863,7 @@
                     recipientAccount: accNumber,
                     recipientBank: bankName,
                     transactionId: transactionId,
-                    note: 'Sent from my Gray Pay account'
+                    note: 'Sent from my Gpay account'
                 }
             };
             currentUser.transactions.unshift(transaction); 
@@ -836,7 +882,6 @@
         }, 15000);
     }
 
-    // ========== BUY AIRTIME ==========
     function showBuyAirtime() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
@@ -880,7 +925,6 @@
         }, 10000);
     }
 
-    // ========== BUY DATA ==========
     function showBuyData() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
@@ -927,7 +971,6 @@
         }, 10000);
     }
 
-    // ========== BUY PBC ==========
     function showBuyPBC() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
@@ -958,7 +1001,6 @@
     }
     function goBackToBank() { showBankDetails(); }
 
-    // ========== TRANSACTION HISTORY ==========
     function showTransactionHistory() {
         if(!currentUser) return;
         
@@ -1022,8 +1064,6 @@
             historyHtml += `</div>`;
         }
         
-        // Email verification warning removed from transaction history
-        
         document.getElementById('dynamicContent').innerHTML = `
             <div id="historyView">
                 <div class="header">
@@ -1040,7 +1080,6 @@
         document.getElementById('historyView').style.padding = '20px';
     }
     
-    // ========== TRANSACTION DETAILS ==========
     function showTransactionDetails(transactionId) {
         if(!currentUser) return;
         
@@ -1060,9 +1099,9 @@
         let sender = details.sender || currentUser.firstname + ' ' + currentUser.surname;
         let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Mining System' : 'Bank Transfer');
         let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : '****');
-        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gray Pay' : 'Bank');
+        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : 'Bank');
         let transId = details.transactionId || transaction.id || 'N/A';
-        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gray Pay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : 'Transaction via Gray Pay');
+        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gpay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : 'Transaction via Gpay');
         let isPositive = (type === 'Bonus' || type === 'Mining Reward' || type === 'Mining Complete');
         
         let detailsHtml = `
@@ -1148,7 +1187,7 @@
         let transaction = currentUser.transactions.find(t => t.id == transactionId);
         if(transaction) {
             let details = transaction.fullDetails || {};
-            let shareText = `Gray Pay Transaction\nAmount: ₦${(details.amount || transaction.amount).toLocaleString()}\nType: ${transaction.type}\nDate: ${transaction.date}\nID: ${transactionId}`;
+            let shareText = `Gpay Transaction\nAmount: ₦${(details.amount || transaction.amount).toLocaleString()}\nType: ${transaction.type}\nDate: ${transaction.date}\nID: ${transactionId}`;
             navigator.clipboard.writeText(shareText);
             alert('Receipt copied to clipboard!');
         } else {
