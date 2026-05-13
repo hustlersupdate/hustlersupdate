@@ -571,9 +571,8 @@
     function logout() { showSplashLoading(() => { currentUser = null; localStorage.removeItem('graypay_current'); closeDynamic(); showWelcomePage(); }); }
     function closeDynamic() { document.getElementById('dynamicContent').innerHTML = ''; showDashboardPage(); }
 
-    // ========== NEW WORKING FUNCTIONS ADDED (from old code) ==========
-    // These are the ONLY things added. Buy PBC section is COMPLETELY UNCHANGED below.
-
+    // ========== WORKING WITHDRAWAL, AIRTIME, DATA ==========
+    
     function showSuccessPopup(title, message, amount, recipient, bank, account, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 10000;">
@@ -641,14 +640,14 @@
         };
     }
 
-    function showDataSuccessPopup(amount, phone, plan, transactionId, onViewReceipt) {
+    function showDataSuccessPopup(amount, phone, plan, network, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 10000;">
                 <div style="background: #1f1f1f; border-radius: 28px; padding: 28px 20px; width: 90%; max-width: 380px; text-align: center;">
                     <div style="font-size: 56px; margin-bottom: 12px;">🌐✅</div>
                     <h3 style="color: #10b981; font-size: 22px; margin-bottom: 8px;">Data Purchase Successful!</h3>
                     <p style="color: #9ca3af; margin-bottom: 20px;">You have successfully purchased</p>
-                    <div style="font-size: 26px; font-weight: bold; color: #34d399; margin-bottom: 8px;">${plan}</div>
+                    <div style="font-size: 26px; font-weight: bold; color: #34d399; margin-bottom: 8px;">${plan} on ${network}</div>
                     <div style="font-size: 36px; font-weight: bold; color: #f87171; margin-bottom: 20px;">₦${amount.toLocaleString()}</div>
                     <div style="background: #0a0a0a; border-radius: 18px; padding: 14px; margin-bottom: 24px;">
                         <p style="color: #fff; font-weight: 500;">${phone}</p>
@@ -675,12 +674,12 @@
         };
     }
 
-    // WITHDRAW - WORKING
+    // WITHDRAW - WORKING (placeholder changed to 1234)
     function showWithdrawPage() {
         if(!currentUser) return;
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
         let opts = banks.map(b => `<option>${b}</option>`).join('');
-        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 4234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦10,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦10,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('withdrawView').style.display = 'block'; document.getElementById('withdrawView').style.padding = '20px';
     }
     
@@ -690,7 +689,7 @@
         let accName = document.getElementById('accName').value;
         let accNumber = document.getElementById('accNumber').value;
         let bankName = document.getElementById('bankName').value;
-        if(code !== '4234') { alert('Invalid PBC Code! Use code: 4234'); return; }
+        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
         if(amt < 10000) { alert('Minimum withdrawal is ₦10,000'); return; }
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
         if(!accName || !accNumber) { alert('Please fill account name and number'); return; }
@@ -703,10 +702,10 @@
         }, 15000);
     }
 
-    // AIRTIME - WORKING
+    // AIRTIME - WORKING (placeholder changed to 1234)
     function showBuyAirtime() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 4234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
     }
     
@@ -714,7 +713,7 @@
         let code = document.getElementById('airCode').value;
         let amt = parseInt(document.getElementById('airAmount').value);
         let phone = document.getElementById('airPhone').value;
-        if(code !== '4234') { alert('Invalid PBC Code! Use code: 4234'); return; }
+        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
         if(!phone || !amt) { alert('Fill all fields'); return; }
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
         showFullSplashLoading('Processing airtime purchase...', () => { 
@@ -726,34 +725,34 @@
         }, 10000);
     }
 
-    // DATA - WORKING
+    // DATA - WORKING with network selector + updated plans (1GB = ₦500, placeholder 1234)
     function showBuyData() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataPlan" class="input-field"><option value="500">500MB - ₦500</option><option value="1000">1GB - ₦1000</option><option value="2000">2GB - ₦2000</option><option value="5000">5GB - ₦5000</option><option value="10000">10GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 4234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataNetwork" class="input-field"><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select><select id="dataPlan" class="input-field"><option value="500">1GB - ₦500</option><option value="1000">2GB - ₦1000</option><option value="2000">5GB - ₦2000</option><option value="5000">10GB - ₦5000</option><option value="10000">20GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('dataView').style.display = 'block'; document.getElementById('dataView').style.padding = '20px';
     }
     
     function processData() {
         let code = document.getElementById('dataCode').value;
         let phone = document.getElementById('dataPhone').value;
+        let network = document.getElementById('dataNetwork').value;
         let plan = document.getElementById('dataPlan');
         let amt = parseInt(plan.value);
         let name = plan.options[plan.selectedIndex].text;
-        if(code !== '4234') { alert('Invalid PBC Code! Use code: 4234'); return; }
+        if(code !== '4234') { alert('Invalid PBC Code!'); return; }
         if(!phone) { alert('Enter phone number'); return; }
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
         showFullSplashLoading('Processing data purchase...', () => { 
             currentUser.balance -= amt; 
             let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
-            let transaction = { id: transactionId, type: 'Data', amount: amt, plan: name, phone: phone, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Data Purchase', amount: amt, fees: 0, taxes: 0, sender: currentUser.firstname + ' ' + currentUser.surname, recipient: phone, recipientAccount: phone, recipientBank: 'Telecom', transactionId: transactionId, note: 'Data purchase - ' + name } };
+            let transaction = { id: transactionId, type: 'Data', amount: amt, plan: name, network: network, phone: phone, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Data Purchase', amount: amt, fees: 0, taxes: 0, sender: currentUser.firstname + ' ' + currentUser.surname, recipient: phone, recipientAccount: phone, recipientBank: network, transactionId: transactionId, note: 'Data purchase - ' + name + ' on ' + network } };
             currentUser.transactions.unshift(transaction); saveUsers(); 
-            showDataSuccessPopup(amt, phone, name, transactionId, () => showTransactionDetails(transactionId));
+            showDataSuccessPopup(amt, phone, name, network, transactionId, () => showTransactionDetails(transactionId));
         }, 10000);
     }
 
     // ========== BUY PBC - YOUR ORIGINAL CODE (COMPLETELY UNCHANGED) ==========
-    // I DID NOT TOUCH ANYTHING BELOW THIS LINE. IT'S EXACTLY AS YOU HAD IT.
-
+    
     function showBuyPBC() {
         if(!currentUser) return;
         document.getElementById('dynamicContent').innerHTML = `<div id="pbcView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy PBC</h2><div class="info-box">Amount: ₦7,000 (Fixed)</div><input type="text" id="pbcName" class="input-field" placeholder="Full Name"><input type="email" id="pbcEmail" class="input-field" placeholder="Email Address"><button id="pbcPayBtn" class="btn btn-gray" disabled onclick="pbcStep1()">Pay</button></div>`;
@@ -841,7 +840,7 @@
     
     function goBackToBank() { showBankDetails(); }
 
-    // Transaction History Functions (updated to show failed transactions)
+    // Transaction History Functions
     function showTransactionHistory() {
         if(!currentUser) return;
         let transactions = [...currentUser.transactions];
@@ -866,7 +865,7 @@
                 let isFailed = t.status === 'Failed' || t.type === 'PBC Purchase Failed';
                 if (t.type === 'Withdrawal') desc = `You sent money to ${t.fullDetails?.recipient || 'Bank'} ${t.fullDetails?.recipientAccount ? t.fullDetails.recipientAccount.slice(0,4)+'...' : ''}`;
                 else if (t.type === 'Airtime') desc = `You bought airtime for ${t.phone}`;
-                else if (t.type === 'Data') desc = `You bought ${t.plan} data for ${t.phone}`;
+                else if (t.type === 'Data') desc = `You bought ${t.plan} data for ${t.phone} (${t.network || ''})`;
                 else if (t.type === 'Bonus') { desc = `You received a welcome bonus`; isNegative = false; }
                 else if (t.type === 'Mining Reward' || t.type === 'Mining Complete') { desc = t.fullDetails?.note || `Mining reward`; isNegative = false; }
                 else if (t.type === 'PBC Purchase') { desc = `PBC Code purchased - Code: 4234`; isNegative = false; isNeutral = true; }
@@ -900,7 +899,7 @@
         let sender = details.sender || currentUser.firstname + ' ' + currentUser.surname;
         let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Mining System' : (type === 'PBC Purchase' ? 'Gpay System' : (type === 'PBC Purchase Failed' ? 'Gpay System' : 'Bank Transfer')));
         let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'PBC Purchase' ? 'Gpay' : (type === 'PBC Purchase Failed' ? 'N/A' : '****')));
-        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : (type === 'PBC Purchase' ? 'Gpay System' : (type === 'PBC Purchase Failed' ? 'Gpay System' : 'Bank')));
+        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? (transaction.network || 'Telecom') : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : (type === 'PBC Purchase' ? 'Gpay System' : (type === 'PBC Purchase Failed' ? 'Gpay System' : 'Bank')));
         let transId = details.transactionId || transaction.id || 'N/A';
         let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gpay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : (type === 'PBC Purchase' ? '✅ Payment successfully! Your PBC Code: 4234' : (type === 'PBC Purchase Failed' ? '❌ Transaction verification failed! No payment received.' : 'Transaction via Gpay')));
         let isPositive = (type === 'Bonus' || type === 'Mining Reward' || type === 'Mining Complete');
