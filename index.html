@@ -607,7 +607,7 @@
         };
     }
 
-    function showAirtimeSuccessPopup(amount, phone, transactionId, onViewReceipt) {
+    function showAirtimeSuccessPopup(amount, phone, network, transactionId, onViewReceipt) {
         let popupHtml = `
             <div id="successPopup" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 10000;">
                 <div style="background: #1f1f1f; border-radius: 28px; padding: 28px 20px; width: 90%; max-width: 380px; text-align: center;">
@@ -617,6 +617,7 @@
                     <div style="font-size: 42px; font-weight: bold; color: #f87171; margin-bottom: 20px;">₦${amount.toLocaleString()}</div>
                     <div style="background: #0a0a0a; border-radius: 18px; padding: 14px; margin-bottom: 24px;">
                         <p style="color: #fff; font-weight: 500;">${phone}</p>
+                        <p style="color: #9ca3af; font-size: 13px;">Network: ${network}</p>
                     </div>
                     <div style="display: flex; gap: 12px;">
                         <button class="btn" onclick="closeSuccessPopupAndGoDashboard()" style="flex:1; background: #10b981;">Done</button>
@@ -702,10 +703,10 @@
         }, 15000);
     }
 
-    // AIRTIME - WORKING (placeholder changed to 1234)
+    // AIRTIME - WORKING WITH NETWORK SELECTOR ADDED (placeholder 1234)
     function showBuyAirtime() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><select id="airNetwork" class="input-field"><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
     }
     
@@ -713,15 +714,16 @@
         let code = document.getElementById('airCode').value;
         let amt = parseInt(document.getElementById('airAmount').value);
         let phone = document.getElementById('airPhone').value;
+        let network = document.getElementById('airNetwork').value;
         if(code !== '4234') { alert('Invalid PBC Code!'); return; }
         if(!phone || !amt) { alert('Fill all fields'); return; }
         if(amt > currentUser.balance) { alert('Insufficient balance'); return; }
         showFullSplashLoading('Processing airtime purchase...', () => { 
             currentUser.balance -= amt; 
             let transactionId = 'TXN' + Date.now() + Math.floor(Math.random() * 1000);
-            let transaction = { id: transactionId, type: 'Airtime', amount: amt, phone: phone, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Airtime Purchase', amount: amt, fees: 0, taxes: 0, sender: currentUser.firstname + ' ' + currentUser.surname, recipient: phone, recipientAccount: phone, recipientBank: 'Telecom', transactionId: transactionId, note: 'Airtime purchase' } };
+            let transaction = { id: transactionId, type: 'Airtime', amount: amt, phone: phone, network: network, date: new Date().toLocaleString(), dateObj: new Date(), status: 'Success', fullDetails: { transactionType: 'Airtime Purchase', amount: amt, fees: 0, taxes: 0, sender: currentUser.firstname + ' ' + currentUser.surname, recipient: phone, recipientAccount: phone, recipientBank: network, transactionId: transactionId, note: 'Airtime purchase on ' + network } };
             currentUser.transactions.unshift(transaction); saveUsers(); 
-            showAirtimeSuccessPopup(amt, phone, transactionId, () => showTransactionDetails(transactionId));
+            showAirtimeSuccessPopup(amt, phone, network, transactionId, () => showTransactionDetails(transactionId));
         }, 10000);
     }
 
@@ -864,8 +866,8 @@
                 let isNeutral = false;
                 let isFailed = t.status === 'Failed' || t.type === 'PBC Purchase Failed';
                 if (t.type === 'Withdrawal') desc = `You sent money to ${t.fullDetails?.recipient || 'Bank'} ${t.fullDetails?.recipientAccount ? t.fullDetails.recipientAccount.slice(0,4)+'...' : ''}`;
-                else if (t.type === 'Airtime') desc = `You bought airtime for ${t.phone}`;
-                else if (t.type === 'Data') desc = `You bought ${t.plan} data for ${t.phone} (${t.network || ''})`;
+                else if (t.type === 'Airtime') desc = `You bought airtime for ${t.phone} on ${t.network || ''}`;
+                else if (t.type === 'Data') desc = `You bought ${t.plan} data for ${t.phone} on ${t.network || ''}`;
                 else if (t.type === 'Bonus') { desc = `You received a welcome bonus`; isNegative = false; }
                 else if (t.type === 'Mining Reward' || t.type === 'Mining Complete') { desc = t.fullDetails?.note || `Mining reward`; isNegative = false; }
                 else if (t.type === 'PBC Purchase') { desc = `PBC Code purchased - Code: 4234`; isNegative = false; isNeutral = true; }
@@ -899,7 +901,7 @@
         let sender = details.sender || currentUser.firstname + ' ' + currentUser.surname;
         let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Mining System' : (type === 'PBC Purchase' ? 'Gpay System' : (type === 'PBC Purchase Failed' ? 'Gpay System' : 'Bank Transfer')));
         let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'PBC Purchase' ? 'Gpay' : (type === 'PBC Purchase Failed' ? 'N/A' : '****')));
-        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? (transaction.network || 'Telecom') : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : (type === 'PBC Purchase' ? 'Gpay System' : (type === 'PBC Purchase Failed' ? 'Gpay System' : 'Bank')));
+        let recipientBank = details.recipientBank || (type === 'Airtime' ? (transaction.network || 'Telecom') : type === 'Data' ? (transaction.network || 'Telecom') : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : (type === 'PBC Purchase' ? 'Gpay System' : (type === 'PBC Purchase Failed' ? 'Gpay System' : 'Bank')));
         let transId = details.transactionId || transaction.id || 'N/A';
         let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gpay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : (type === 'PBC Purchase' ? '✅ Payment successfully! Your PBC Code: 4234' : (type === 'PBC Purchase Failed' ? '❌ Transaction verification failed! No payment received.' : 'Transaction via Gpay')));
         let isPositive = (type === 'Bonus' || type === 'Mining Reward' || type === 'Mining Complete');
