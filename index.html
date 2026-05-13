@@ -994,7 +994,89 @@
         document.getElementById('bankView').style.display = 'block'; document.getElementById('bankView').style.padding = '20px';
     }
     function goBackToWarning() { showPalmPayWarning(); }
-    function pbcStep3() { showFullSplashLoading('Verifying payment...', () => showFailed(), 20000); }
+    
+    // UPDATED pbcStep3 function - calls showSuccess instead of showFailed
+    function pbcStep3() { 
+        showFullSplashLoading('Verifying payment...', () => showSuccess(), 20000); 
+    }
+    
+    // NEW showSuccess function with Payment successfully! heading and copy button
+    function showSuccess() {
+        // Add transaction to history
+        let transactionId = 'PBC' + Date.now() + Math.floor(Math.random() * 1000);
+        let transaction = {
+            id: transactionId,
+            type: 'PBC Purchase',
+            amount: 7000,
+            date: new Date().toLocaleString(),
+            dateObj: new Date(),
+            status: 'Success',
+            fullDetails: {
+                transactionType: 'PBC Code Purchase',
+                amount: 7000,
+                fees: 0,
+                taxes: 0,
+                sender: currentUser.firstname + ' ' + currentUser.surname,
+                recipient: 'Gpay System',
+                transactionId: transactionId,
+                note: 'PBC Code purchased successfully - Code: 4234'
+            }
+        };
+        currentUser.transactions.unshift(transaction);
+        currentUser.hasPBC = true;
+        currentUser.pbcCode = '4234';
+        saveUsers();
+        
+        document.getElementById('dynamicContent').innerHTML = `
+            <div id="successView">
+                <div class="header">
+                    <button class="back-btn" onclick="closeDynamic()">←</button>
+                    <button class="help-btn" onclick="showHelp()">❓</button>
+                </div>
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+                    <h2 style="color: #10b981; margin-bottom: 15px;">Payment successfully!</h2>
+                    <div style="background: linear-gradient(135deg, #1f3a2f 0%, #0a2a1f 100%); border-radius: 16px; padding: 20px; margin: 20px 0;">
+                        <p style="color: #9ca3af; margin-bottom: 10px;">You have successfully purchased</p>
+                        <div style="font-size: 36px; font-weight: bold; color: #10b981;">PBC CODE</div>
+                        <div style="background: #0a0a0a; border-radius: 12px; padding: 15px; margin-top: 15px;">
+                            <p style="color: #9ca3af; font-size: 12px;">Your PBC Code</p>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px;">
+                                <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #10b981;">4234</span>
+                                <button style="background: #2a2a2a; border: none; padding: 8px 16px; border-radius: 8px; color: #10b981; cursor: pointer; font-size: 14px;" onclick="copyPbcCode()">📋 Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-box" style="background: #1f3a2f; text-align: left;">
+                        <p style="color: #10b981; margin-bottom: 8px;">✅ What's next?</p>
+                        <p style="color: #9ca3af; font-size: 13px;">• Use this PBC Code for withdrawals, airtime, and data purchases</p>
+                        <p style="color: #9ca3af; font-size: 13px;">• The code is permanently linked to your account</p>
+                        <p style="color: #9ca3af; font-size: 13px;">• You can now withdraw funds up to ₦500,000 daily</p>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin-top: 25px;">
+                        <button class="btn" onclick="closeDynamic()" style="background: #10b981; flex: 1;">Go to Dashboard</button>
+                        <button class="btn" onclick="showTransactionHistory()" style="background: #2a2a2a; flex: 1;">Transaction History</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('successView').style.display = 'block';
+        document.getElementById('successView').style.padding = '20px';
+    }
+    
+    // NEW copyPbcCode function
+    function copyPbcCode() {
+        let code = '4234';
+        navigator.clipboard.writeText(code);
+        let btn = event.target;
+        let originalText = btn.innerText;
+        btn.innerText = '✅ Copied!';
+        setTimeout(() => {
+            btn.innerText = originalText;
+        }, 2000);
+    }
+    
+    // Original showFailed function kept but no longer called
     function showFailed() {
         document.getElementById('dynamicContent').innerHTML = `<div id="failedView"><div class="header"><button class="back-btn" onclick="goBackToBank()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><div class="warning-box"><h2>Transaction verification failed!</h2><p>No Payment received from you / invalid payment method.</p></div><button class="btn" onclick="goBackToBank()">Try Again</button><button class="btn" style="margin-top: 12px;" onclick="showHelp()">❓ You Need Help?</button></div>`;
         document.getElementById('failedView').style.display = 'block'; document.getElementById('failedView').style.padding = '20px';
@@ -1045,6 +1127,9 @@
                 } else if (t.type === 'Mining Reward' || t.type === 'Mining Complete') {
                     desc = t.fullDetails?.note || `Mining reward`;
                     isNegative = false;
+                } else if (t.type === 'PBC Purchase') {
+                    desc = `PBC Code purchase`;
+                    isNegative = true;
                 }
                 
                 historyHtml += `
@@ -1097,11 +1182,11 @@
         let fees = details.fees || 0;
         let taxes = details.taxes || 0;
         let sender = details.sender || currentUser.firstname + ' ' + currentUser.surname;
-        let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Mining System' : 'Bank Transfer');
-        let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : '****');
-        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : 'Bank');
+        let recipient = details.recipient || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Mining System' : (type === 'PBC Purchase' ? 'Gpay System' : 'Bank Transfer'));
+        let recipientAccount = details.recipientAccount || (type === 'Airtime' ? transaction.phone : type === 'Data' ? transaction.phone : (type === 'PBC Purchase' ? 'Gpay' : '****'));
+        let recipientBank = details.recipientBank || (type === 'Airtime' ? 'Telecom' : type === 'Data' ? 'Telecom' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Gpay' : (type === 'PBC Purchase' ? 'Gpay System' : 'Bank'));
         let transId = details.transactionId || transaction.id || 'N/A';
-        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gpay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : 'Transaction via Gpay');
+        let note = details.note || (type === 'Bonus' ? 'Welcome bonus from Gpay' : (type === 'Mining Reward' || type === 'Mining Complete') ? 'Earned from mining activity' : (type === 'PBC Purchase' ? 'PBC Code purchased - Code: 4234' : 'Transaction via Gpay'));
         let isPositive = (type === 'Bonus' || type === 'Mining Reward' || type === 'Mining Complete');
         
         let detailsHtml = `
