@@ -505,18 +505,29 @@
         }
     }
     
-    // ============ UPDATE PROFILE BADGE - FIXED ============
+    // ============ UPDATE PROFILE BADGE - RED DOT DISAPPEARS PERMANENTLY AFTER VERIFICATION ============
     async function updateProfileBadge() {
         if (!currentUser) return;
+        
+        // Check if this user has already been verified permanently (stored in localStorage)
+        const alreadyVerifiedPermanently = localStorage.getItem(`verified_permanent_${currentUser.email}`);
+        
+        if (alreadyVerifiedPermanently === 'true') {
+            const badge = document.getElementById('profileBadge');
+            if (badge) badge.style.display = 'none';
+            return;
+        }
         
         const isVerified = await isEmailVerifiedInFirebase(currentUser.email);
         const badge = document.getElementById('profileBadge');
         
         if (badge) {
-            if (!isVerified) {
-                badge.style.display = 'inline-block';  // Show red dot if NOT verified
+            if (isVerified) {
+                // Once verified, hide badge permanently and store in localStorage
+                badge.style.display = 'none';
+                localStorage.setItem(`verified_permanent_${currentUser.email}`, 'true');
             } else {
-                badge.style.display = 'none';  // HIDE red dot if verified
+                badge.style.display = 'inline-block';
             }
         }
     }
@@ -642,7 +653,7 @@
         if(!currentUser) return;
         let banks = ['Access Bank', 'GTBank', 'First Bank', 'Zenith Bank', 'UBA', 'WEMA Bank', 'Polaris Bank', 'Fidelity Bank', 'Sterling Bank', 'PalmPay', 'Opay', 'Moniepoint', 'Kuda Bank'];
         let opts = banks.map(b => `<option>${b}</option>`).join('');
-        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 4234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦10,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="withdrawView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Transfer To Bank</h2><input type="text" id="accName" class="input-field" placeholder="Account Name"><input type="text" id="accNumber" class="input-field" placeholder="Account Number"><select id="bankName" class="input-field">${opts}</select><input type="number" id="withdrawAmount" class="input-field" placeholder="Amount"><input type="text" id="pbcCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><div class="info-box">Available: ₦${currentUser.balance}</div><div class="min-withdrawal">⚠️ Minimum withdrawal: ₦10,000</div><button class="btn" onclick="processWithdraw()">Submit</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('withdrawView').style.display = 'block'; document.getElementById('withdrawView').style.padding = '20px';
     }
     
@@ -668,7 +679,7 @@
     // ============ AIRTIME ============
     function showBuyAirtime() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><select id="airNetwork" class="input-field"><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 4234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="airtimeView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Airtime</h2><input type="text" id="airPhone" class="input-field" placeholder="Phone Number"><select id="airNetwork" class="input-field"><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select><input type="number" id="airAmount" class="input-field" placeholder="Amount"><input type="text" id="airCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processAirtime()">Buy Airtime</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('airtimeView').style.display = 'block'; document.getElementById('airtimeView').style.padding = '20px';
     }
     
@@ -692,7 +703,7 @@
     // ============ DATA ============
     function showBuyData() {
         if(!currentUser) return;
-        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataNetwork" class="input-field"><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select><select id="dataPlan" class="input-field"><option value="500">1GB - ₦500</option><option value="1000">2GB - ₦1000</option><option value="2000">5GB - ₦2000</option><option value="5000">10GB - ₦5000</option><option value="10000">20GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 4234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
+        document.getElementById('dynamicContent').innerHTML = `<div id="dataView"><div class="header"><button class="back-btn" onclick="closeDynamic()">←</button><button class="help-btn" onclick="showHelp()">❓</button></div><h2>Buy Data</h2><input type="text" id="dataPhone" class="input-field" placeholder="Phone Number"><select id="dataNetwork" class="input-field"><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select><select id="dataPlan" class="input-field"><option value="500">1GB - ₦500</option><option value="1000">2GB - ₦1000</option><option value="2000">5GB - ₦2000</option><option value="5000">10GB - ₦5000</option><option value="10000">20GB - ₦10000</option></select><input type="text" id="dataCode" class="input-field" placeholder="PBC Code (e.g., 1234)"><button class="btn" onclick="processData()">Buy Data</button></div>`;
         showPage('dashboardPage'); document.getElementById('dashboardPage').classList.add('hidden'); document.getElementById('dataView').style.display = 'block'; document.getElementById('dataView').style.padding = '20px';
     }
     
